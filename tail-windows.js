@@ -58,9 +58,9 @@ module.exports = function(RED) {
                 if (interval !== 0) node.error("'" + node.filename + "' has appeared, following new file");
 
                 var options = {
-                    // logger: console,
-                    // useWatchFile: true,
-                    // follow: true,
+                    logger: console,
+                    useWatchFile: true,
+                    follow: true,
                     fsWatchOptions: {
                         persistent: true,
                         interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 250)
