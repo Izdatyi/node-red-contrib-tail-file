@@ -1,0 +1,23 @@
+{
+  "name": "node-red-contrib-tail-windows",
+  "version": "1.0.3",
+  "description": "tail for Windows",
+  "author": "Izdatyi",
+  "license": "Apache-2.0",
+  "keywords": [
+    "node-red",
+    "tail",
+    "tail-windows",
+    "windows"
+  ],
+  "node-red": {
+    "nodes": {
+      "tail windows": "tail-windows.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LittleDimON/node-red-contrib-tail-windows.git"
+  },
+  "dependencies": {}
+}
