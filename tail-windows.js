@@ -59,8 +59,8 @@ module.exports = function(RED) {
 
                 var options = {
                     logger: console,
-                    useWatchFile: true,
-                    follow: true,
+                    // useWatchFile: true,
+                    // follow: true,
                     fsWatchOptions: {
                         persistent: true,
                         interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 250)
@@ -77,7 +77,7 @@ module.exports = function(RED) {
                     if (tail) 
                     {
                         tail.on("line", function (data) {
-                            if (echo) node.warn("line. skipBlank: " + node.skipBlank + (node.skipBlank ? ", useTrim: " + node.useTrim : ""));
+                            // if (echo) node.warn("line. skipBlank: " + node.skipBlank + (node.skipBlank ? ", useTrim: " + node.useTrim : ""));
                             
                             if (!node.skipBlank || ((node.useTrim ? data.toString().trim() : data.toString()) !== "")) {
                                 node.send({
@@ -87,17 +87,25 @@ module.exports = function(RED) {
                             }
                             node.status({fill: "green", shape: "dot", text: "active"});
                         });
+                        
+                        tail.on("disappears", function () {
+                            node.error("'" + this.filename + "' has become inaccessible: No such file or directory");
+                            node.status({fill: "grey", shape: "ring", text: "waiting for file"});
+                        });
+
+                        tail.on("reappears", function () {
+                            node.error("'" + this.filename + "' has appeared, following new file");
+                            node.status({fill: "green", shape: "dot", text: "active"});
+                        });
+
+                        tail.on("truncated", function () {
+                            node.error(this.filename + ": file truncated");
+                            node.status({fill: "green", shape: "dot", text: "active"});
+                        });
 
                         tail.on("error", function (error) {
                             node.error(error.toString());
-
-                            if (error.toString().toLowerCase().indexOf("' has become inaccessible: No such file or directory".toLowerCase()) !== -1) {
-                                node.status({fill: "grey", shape: "ring", text: "waiting for file"});
-                            }
-                            else if (error.toString().toLowerCase().indexOf("' has appeared, following new file".toLowerCase()) !== -1) {
-                                node.status({fill: "green", shape: "dot", text: "active"});
-                            }
-                            else node.status({fill: "red", shape: "dot", text: "error"});
+                            node.status({fill: "red", shape: "dot", text: "error"});
                         });
 
                         node.status({fill: "green", shape: "dot", text: "active"});
