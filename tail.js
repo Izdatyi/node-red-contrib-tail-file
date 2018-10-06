@@ -8,7 +8,7 @@ var Tail, environment, events, fs,
       throw new Error('Bound instance method accessed before binding');
     }
   };
-
+  
 events = require("events");
 
 fs = require('fs');
@@ -24,7 +24,8 @@ Tail = class Tail extends events.EventEmitter {
 
     if (this.queue.length >= 1) {
       block = this.queue[0];
-      if (block.end > block.start) {
+      if (block.end > block.start)
+      {
         stream = fs.createReadStream(this.filename, {
           start: block.start,
           end: block.end - 1,
@@ -71,13 +72,13 @@ Tail = class Tail extends events.EventEmitter {
     super(filename, options);
     this.readBlock = this.readBlock.bind(this);
     this.filename = filename;
-
+    
     ({
-      separator: this.separator = /[\r]{0,1}\n/,
-      fsWatchOptions: this.fsWatchOptions = {},
-      fromBeginning = false,
-      logger: this.logger,
-      flushAtEOF: this.flushAtEOF = false,
+      separator: this.separator = /[\r]{0,1}\n/, 
+      fsWatchOptions: this.fsWatchOptions = {}, 
+      fromBeginning = false, 
+      logger: this.logger,  
+      flushAtEOF: this.flushAtEOF = false, 
       encoding: this.encoding = "utf-8"
     } = options);
 
@@ -130,24 +131,26 @@ Tail = class Tail extends events.EventEmitter {
     if (curr.ino > 0) {
       if (!this.online) {
         if (this.logger) this.logger.info("'" + this.filename + "' has appeared, following new file");
-        this.emit("error", "'" + this.filename + "' has appeared, following new file");
+        this.emit("reappears");
       }
-    } else {
+
+      if (curr.size > prev.size) {
+        this.pos = curr.size;
+        this.queue.push({
+          start: prev.size,
+          end: curr.size
+        });
+        if (this.queue.length === 1) return this.internalDispatcher.emit("next");
+      }
+      else if (curr.size < prev.size) this.emit("truncated");
+    }
+    else {
       if (this.online) {
         if (this.logger) this.logger.info("'" + this.filename + "' has become inaccessible: No such file or directory");
-        this.emit("error", "'" + this.filename + "' has become inaccessible: No such file or directory");
+        this.emit("disappears");
       }
     }
     this.online = (curr.ino > 0);
-
-    if (curr.size > prev.size) {
-      this.pos = curr.size;
-      this.queue.push({
-        start: prev.size,
-        end: curr.size
-      });
-      if (this.queue.length === 1) return this.internalDispatcher.emit("next");
-    }
   }
 
   unwatch() {
