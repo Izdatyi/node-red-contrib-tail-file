@@ -2,7 +2,6 @@
 module.exports = function(RED) {
     "use strict";
     var Tail = require('./tail.js').Tail;
-    // var Tail = require('tail').Tail;
     var fs = require('fs');
     var platform = require('os').platform();
 
@@ -15,8 +14,8 @@ module.exports = function(RED) {
         
         this.filename = config.filename || "";
         this.create = config.create || false;
-        this.fromBeginning = config.fromBeginning;
-        this.flushAtEOF = config.flushAtEOF;
+        this.fromBeginning = config.fromBeginning || false;
+        this.flushAtEOF = config.flushAtEOF || false;
         this.skipBlank = config.skipBlank || false;
         this.useTrim = config.useTrim || false;
         this.interval = config.interval || 0;
@@ -58,15 +57,15 @@ module.exports = function(RED) {
                 if (interval !== 0) node.error("'" + node.filename + "' has appeared, following new file");
 
                 var options = {
-                    logger: console,
-                    useWatchFile: true,
-                    follow: true,
+                    // logger: console,
+                    // useWatchFile: true,
+                    // follow: true,
                     fsWatchOptions: {
                         persistent: true,
                         interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 250)
                     },
-                    fromBeginning: node.fromBeginning || false,
-                    flushAtEOF: node.flushAtEOF || false,
+                    fromBeginning: node.fromBeginning,
+                    flushAtEOF: node.flushAtEOF,
                     separator: new RegExp((node.separator.trim()!==""?node.separator.trim():"[\r]{0,1}\n"),"gi"),
                     encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8")
                 };
@@ -87,17 +86,25 @@ module.exports = function(RED) {
                             }
                             node.status({fill: "green", shape: "dot", text: "active"});
                         });
+                        
+                        tail.on("disappears", function () {
+                            node.error("'" + this.filename + "' has become inaccessible: No such file or directory");
+                            node.status({fill: "grey", shape: "ring", text: "waiting for file"});
+                        });
+
+                        tail.on("reappears", function () {
+                            node.error("'" + this.filename + "' has appeared, following new file");
+                            node.status({fill: "green", shape: "dot", text: "active"});
+                        });
+
+                        tail.on("truncated", function () {
+                            node.error(this.filename + ": file truncated");
+                            node.status({fill: "green", shape: "dot", text: "active"});
+                        });
 
                         tail.on("error", function (error) {
                             node.error(error.toString());
-
-                            if (error.toString().toLowerCase().indexOf("' has become inaccessible: No such file or directory".toLowerCase()) !== -1) {
-                                node.status({fill: "grey", shape: "ring", text: "waiting for file"});
-                            }
-                            else if (error.toString().toLowerCase().indexOf("' has appeared, following new file".toLowerCase()) !== -1) {
-                                node.status({fill: "green", shape: "dot", text: "active"});
-                            }
-                            else node.status({fill: "red", shape: "dot", text: "error"});
+                            node.status({fill: "red", shape: "dot", text: "error"});
                         });
 
                         node.status({fill: "green", shape: "dot", text: "active"});
