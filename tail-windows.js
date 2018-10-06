@@ -14,8 +14,8 @@ module.exports = function(RED) {
         
         this.filename = config.filename || "";
         this.create = config.create || false;
-        this.fromBeginning = config.fromBeginning;
-        this.flushAtEOF = config.flushAtEOF;
+        this.fromBeginning = config.fromBeginning || false;
+        this.flushAtEOF = config.flushAtEOF || false;
         this.skipBlank = config.skipBlank || false;
         this.useTrim = config.useTrim || false;
         this.interval = config.interval || 0;
