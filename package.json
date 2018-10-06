@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/LittleDimON/node-red-contrib-tail-windows.git"
+    "url": "https://github.com/Izdatyi/node-red-contrib-tail-windows.git"
   },
   "dependencies": {}
 }
