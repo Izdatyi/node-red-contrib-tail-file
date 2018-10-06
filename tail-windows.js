@@ -64,8 +64,8 @@ module.exports = function(RED) {
                         persistent: true,
                         interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 250)
                     },
-                    fromBeginning: node.fromBeginning || false,
-                    flushAtEOF: node.flushAtEOF || false,
+                    fromBeginning: node.fromBeginning,
+                    flushAtEOF: node.flushAtEOF,
                     separator: new RegExp((node.separator.trim()!==""?node.separator.trim():"[\r]{0,1}\n"),"gi"),
                     encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8")
                 };
