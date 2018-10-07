@@ -18,6 +18,7 @@ environment = process.env['NODE_ENV'] || 'development';
 Tail = class Tail extends events.EventEmitter {
 
   readBlock() {
+    if (this.logger) this.logger.info("<readBlock>");
     var block, stream;
 
     boundMethodCheck(this, Tail);
@@ -45,6 +46,7 @@ Tail = class Tail extends events.EventEmitter {
             this.emit("line", this.buffer);
             return this.buffer = '';
           }
+          if (this.logger) this.logger.info("end length: " + this.buffer.length + ( (this.buffer.length>0)?(" |" + this.buffer + "|"):""));
         });
 
         return stream.on('data', (data) => {
@@ -62,6 +64,7 @@ Tail = class Tail extends events.EventEmitter {
             }
             return results;
           }
+          if (this.logger) this.logger.info("data length: " + this.buffer.length);
         });
       }
     }
@@ -128,24 +131,76 @@ Tail = class Tail extends events.EventEmitter {
   }
 
   watchFileEvent(curr, prev) {
-    if (this.logger) this.logger.info("curr: " + JSON.stringify(curr, null, 2));
-    if (this.logger) this.logger.info("prev: " + JSON.stringify(prev, null, 2));
-
+    if (this.logger) this.logger.info("---------------------------");
+    if (this.logger) this.logger.info("prev: " + JSON.stringify({
+      "dev": prev.dev,
+      "ino": prev.ino,
+      "size": prev.size
+    }, null, 2));
+    if (this.logger) this.logger.info("curr: " + JSON.stringify({
+      "dev": curr.dev,
+      "ino": curr.ino,
+      "size": curr.size
+    }, null, 2));
+    // if (this.logger) this.logger.info("prev.ino: " + prev.ino+"");
+    // if (this.logger) this.logger.info("curr.ino: " + curr.ino+"");
+    
     if (curr.ino > 0) {
       if (!this.online) {
         if (this.logger) this.logger.info("'" + this.filename + "' has appeared, following new file");
         this.emit("reappears");
       }
 
+      // 0 1 2 3 4 (=5)
+      //
+      // 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 (=20)
+      //                     1  2  3  4  5  6  7  8  9  10
+      //
+      // 0 1 2 3 4 5 6 7 8 9 10 11 12 (=13)
+      //           1 2 3 4 5 6  7  8  |9  10|
+      //
+      // 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 (=15)
+      //           1 2 3 4 5 6  7  8  9  10
+      //
+      // 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 (=16)
+      //             1 2 3 4 5  6  7  8  9  10
+      
       if (curr.size > prev.size) {
+        if ((this.buffer.length > 0) && !((prev.size - this.buffer.length) < 0)) {
+          prev.size = prev.size - this.buffer.length;
+          this.buffer = '';
+        }
+
+        const maxbytes = 5 * 1024 * 1024;
+
         this.pos = curr.size;
         this.queue.push({
-          start: prev.size,
+          start: ((curr.size - prev.size) > maxbytes) ? curr.size - maxbytes : prev.size, // prev.size,
           end: curr.size
         });
         if (this.queue.length === 1) return this.internalDispatcher.emit("next");
       }
-      else if (curr.size < prev.size) this.emit("truncated");
+      else {
+        if (curr.size < prev.size) {
+          this.pos = curr.size;
+          this.queue = [];
+          this.buffer = '';
+          this.emit("truncated");
+        } 
+        else {
+          if ((this.buffer.length > 0) && !((prev.size - this.buffer.length) < 0)) {
+            prev.size = curr.size - this.buffer.length;
+            this.buffer = '';
+
+            this.pos = curr.size;
+            this.queue.push({
+              start: prev.size,
+              end: curr.size
+            });
+            if (this.queue.length === 1) return this.internalDispatcher.emit("next");
+          }
+        }
+      } 
     }
     else {
       if (this.online) {

@@ -62,7 +62,7 @@ module.exports = function(RED) {
                     // follow: true,
                     fsWatchOptions: {
                         persistent: true,
-                        interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 250)
+                        interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 50)
                     },
                     fromBeginning: node.fromBeginning,
                     flushAtEOF: node.flushAtEOF,
