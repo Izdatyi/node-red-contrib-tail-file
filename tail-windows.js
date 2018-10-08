@@ -13,25 +13,25 @@ module.exports = function(RED) {
         RED.nodes.createNode(this, config);
         
         this.filename = config.filename || "";
+        this.createFile = config.createFile || false;
+        this.encoding = config.encoding || "";
         this.mode = config.mode || "";
         this.split = config.split || false;
         this.separator = config.separator || "";
-        this.createFile = config.createFile || false;
+        this.flushAtEOF = config.flushAtEOF || false;
         this.fromBeginning = config.fromBeginning || false;
         this.rememberLast = config.rememberLast || false;
         this.bytes = config.bytes || false;
         this.maxBytes = config.maxBytes || 0;
-        this.flushAtEOF = config.flushAtEOF || false;
         this.skipBlank = config.skipBlank || false;
         this.useTrim = config.useTrim || false;
         this.interval = config.interval || 0;
-        this.encoding = config.encoding || "";
         var node = this;
         var tail;
 
         const errors = config.errors || false;
         const echo = config.echo || false;
-        if (echo) node.warn("start");
+        if (echo) node.warn("Start");
 
         node.status({fill: "grey", shape: "ring", text: "waiting for file"});
         
@@ -48,19 +48,17 @@ module.exports = function(RED) {
 
         var options = {
             logger: config.echo ? console : null,
-            // useWatchFile: true,
-            // follow: true,
             fsWatchOptions: {
                 persistent: true,
                 interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 100)
             },
+            encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8"),
             mode: node.mode,
+            flushAtEOF: node.flushAtEOF,
             fromBeginning: node.fromBeginning,
             rememberLast: node.rememberLast,
-            maxBytes: (parseInt(node.maxBytes) > 0 ? parseInt(node.maxBytes) : 0),
-            flushAtEOF: node.flushAtEOF,
-            separator: new RegExp((node.separator.trim()!==""?node.separator.trim():"[\r]{0,1}\n"),"gi"),   // var re = new RegExp("a|b", "i"); // var re = /a|b/i;
-            encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8")
+            maxBytes: (node.bytes ? ((parseInt(node.maxBytes) > 0) ? parseInt(node.maxBytes) : 5120) : 0),
+            separator: (node.split ? RegExp(((node.separator.trim() !== "") ? node.separator.trim() : "[\r]{0,1}\n"), "gi") : "")
         };
         if (echo) node.warn(options);
 
@@ -69,7 +67,7 @@ module.exports = function(RED) {
             if (tail) 
             {
                 tail.on("line", function (data) {
-                    // if (echo) node.warn("line. skipBlank: " + node.skipBlank + (node.skipBlank ? ", useTrim: " + node.useTrim : ""));
+                    // if (echo) node.warn(`line. skipBlank: ${node.skipBlank}${(node.skipBlank ? `; useTrim: ${node.useTrim}` : "")}`);
                     
                     if (!node.skipBlank || ((node.useTrim ? data.toString().trim() : data.toString()) !== "")) {
                         node.send({
@@ -81,22 +79,22 @@ module.exports = function(RED) {
                 });
 
                 tail.on("truncated", function () {
-                    if (errors || echo) node.error(node.filename + ": file truncated");
+                    if (errors || echo) node.error(`${node.filename}: file truncated`);
                     node.status({fill: "green", shape: "dot", text: "active"});
                 });    
 
                 tail.on("noent", function () {
-                    if (errors || echo) node.error("cannot open '" + node.filename + "' for reading: No such file or directory");
+                    if (errors || echo) node.error(`cannot open '${node.filename}' for reading: No such file or directory`);
                     node.status({fill: "grey", shape: "ring", text: "waiting for file"});
                 });
 
                 tail.on("disappears", function () {
-                    if (errors || echo) node.error("'" + node.filename + "' has become inaccessible: No such file or directory");
+                    if (errors || echo) node.error(`'${node.filename}' has become inaccessible: No such file or directory`);
                     node.status({fill: "grey", shape: "ring", text: "waiting for file"});
                 });
 
                 tail.on("reappears", function () {
-                    if (errors || echo) node.error("'" + node.filename + "' has appeared, following new file");
+                    if (errors || echo) node.error(`'${node.filename}' has appeared, following new file`);
                     node.status({fill: "green", shape: "dot", text: "active"});
                 });
 

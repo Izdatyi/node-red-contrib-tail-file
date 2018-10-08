@@ -84,18 +84,27 @@ Tail = class Tail extends events.EventEmitter {
     this.filename = filename;
     
     ({
-      separator: this.separator = /[\r]{0,1}\n/, 
+      logger: this.logger, 
       fsWatchOptions: this.fsWatchOptions = {}, 
-      fromBeginning = false, 
-      logger: this.logger,  
+      encoding: this.encoding = "utf-8", 
+      mode: this.mode = "", 
       flushAtEOF: this.flushAtEOF = false, 
-      encoding: this.encoding = "utf-8"
+      fromBeginning = false, 
+      rememberLast: this.rememberLast = false, 
+      maxBytes: this.maxBytes = 0, 
+      separator: this.separator = /[\r]{0,1}\n/
     } = options);
 
     if (this.logger) {
       this.logger.info("<constructor>");
+      this.logger.info(`fsWatchOptions: ${JSON.stringify(this.fsWatchOptions, null, 2)}`);
       this.logger.info(`filename: ${this.filename}`);
       this.logger.info(`encoding: ${this.encoding}`);
+      this.logger.info(`flushAtEOF: ${this.flushAtEOF}`);
+      if (this.mode) this.logger.info(`mode: ${this.mode}`);
+      if (this.mode) this.logger.info(`rememberLast: ${this.rememberLast}`);
+      if (this.maxBytes) this.logger.info(`maxBytes: ${this.maxBytes}`);
+      if (this.separator) this.logger.info(`separator: ${this.separator}`);
     }
 
     this.online = true;
@@ -133,22 +142,6 @@ Tail = class Tail extends events.EventEmitter {
       }.bind(this), interval);
     }.bind(this)
     timing();
-
-    // timer = setInterval(function () {
-    //   if (!fs.existsSync(this.filename)) {
-    //     // if (this.logger) this.logger.info("tick...");
-    //     if (interval == 0) {
-    //       this.emit("noent");
-    //       interval = 1000;
-    //       clearInterval(timer);
-    //       this.start(fromBeginning, interval);
-    //     }
-    //     return;
-    //   }
-    //   clearInterval(timer);
-    //   if (interval !== 0) this.emit("reappears");
-    //   this.watch(fromBeginning);
-    // }.bind(this), interval);
   }
 
   watch(fromBeginning) {
