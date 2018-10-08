@@ -2,7 +2,7 @@
 // lucagrulla/node-tail
 // https://github.com/lucagrulla/node-tail
 
-var Tail, environment, events, fs,
+var timer, Tail, environment, events, fs,
   boundMethodCheck = function (instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new Error('Bound instance method accessed before binding');
@@ -106,10 +106,53 @@ Tail = class Tail extends events.EventEmitter {
     this.internalDispatcher.on('next', () => {
       return this.readBlock();
     });
-    this.watch(fromBeginning);
+
+    this.start(fromBeginning);
+  }
+
+  start(fromBeginning) {
+    if (this.logger) this.logger.info("<start>");
+    var interval = 0;
+    var timing = function () {
+      timer = setInterval(function () {
+        // if (this.logger) this.logger.info("tick... interval: " + interval);
+        if (!fs.existsSync(this.filename)) {
+          if (interval == 0) {
+            this.emit("noent");
+            interval = 1000;
+            clearInterval(timer);
+            timing();
+          }
+          return;
+        }
+        clearInterval(timer);
+        if (interval !== 0) this.emit("reappears");
+
+        this.watch(fromBeginning);
+
+      }.bind(this), interval);
+    }.bind(this)
+    timing();
+
+    // timer = setInterval(function () {
+    //   if (!fs.existsSync(this.filename)) {
+    //     // if (this.logger) this.logger.info("tick...");
+    //     if (interval == 0) {
+    //       this.emit("noent");
+    //       interval = 1000;
+    //       clearInterval(timer);
+    //       this.start(fromBeginning, interval);
+    //     }
+    //     return;
+    //   }
+    //   clearInterval(timer);
+    //   if (interval !== 0) this.emit("reappears");
+    //   this.watch(fromBeginning);
+    // }.bind(this), interval);
   }
 
   watch(fromBeginning) {
+    if (this.logger) this.logger.info("<watch>");
     var err, stats;
 
     if (this.isWatching) return;
@@ -219,13 +262,12 @@ Tail = class Tail extends events.EventEmitter {
   }
 
   unwatch() {
-    if (this.watcher) {
-      this.watcher.close();
-    } else {
-      fs.unwatchFile(this.filename);
-    }
+    if (this.logger) this.logger.info("<unwatch>");
+    if (timer) clearInterval(timer);
+    if (this.isWatching) fs.unwatchFile(this.filename);
     this.isWatching = false;
     this.queue = [];
+    this.buffer = "";
     if (this.logger) return this.logger.info("unwatch: ", this.filename);
   }
 };
