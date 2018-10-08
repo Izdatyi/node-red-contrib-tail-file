@@ -50,7 +50,7 @@ module.exports = function(RED) {
             logger: config.echo ? console : null,
             fsWatchOptions: {
                 persistent: true,
-                interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 500)
+                interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 100)
             },
             encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8"),
             separator: (node.split ? RegExp(((node.separator.trim() !== "") ? node.separator.trim() : "[\r]{0,1}\n"), "gi") : ""),
