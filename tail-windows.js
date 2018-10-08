@@ -47,7 +47,7 @@ module.exports = function(RED) {
 
 
         var options = {
-            logger: console,
+            logger: config.echo ? console : null,
             // useWatchFile: true,
             // follow: true,
             fsWatchOptions: {
