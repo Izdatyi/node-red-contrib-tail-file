@@ -19,6 +19,7 @@ Tail = class Tail extends events.EventEmitter {
 
   readBlock() {
     if (this.logger) this.logger.info("<readBlock>");
+    if (this.separator) this.logger.info(`separator: ${this.separator.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '_')}`);
     var block, stream;
 
     boundMethodCheck(this, Tail);
@@ -32,7 +33,7 @@ Tail = class Tail extends events.EventEmitter {
           encoding: this.encoding,
           start: block.start,
           end: block.end - 1,
-          autoClose: true
+          // autoClose: true
         });
 
         stream.on('error', (error) => {
@@ -57,20 +58,23 @@ Tail = class Tail extends events.EventEmitter {
         return stream.on('data', (data) => {
           if (this.logger) this.logger.info("<data>");
           var chunk, i, len, parts, results;
-          if (this.separator === null) {
+          
+          if (!this.separator) {
             return this.emit("line", data);
-          } else {
+          }
+          else {
             this.buffer += data;
             parts = this.buffer.split(this.separator);
             this.buffer = parts.pop();
             results = [];
             for (i = 0, len = parts.length; i < len; i++) {
               chunk = parts[i];
-              if (this.logger) this.logger.info("data line: " + "|" + chunk + "|");
+              if (this.logger) this.logger.info(`data line: |${chunk}|`);
               results.push(this.emit("line", chunk));
             }
             return results;
           }
+          
           if (this.logger) this.logger.info("data length: " + this.buffer.length + ( (this.buffer.length>0)?(" |" + this.buffer + "|"):""));
         });
       }
@@ -201,77 +205,90 @@ Tail = class Tail extends events.EventEmitter {
   }
 
   watchFileEvent(curr, prev) {
-    if (this.logger) this.logger.info("---------------------------");
-    if (this.logger) this.logger.info("prev: " + JSON.stringify({
-      "dev": prev.dev,
-      "ino": prev.ino,
-      "size": prev.size
-    }, null, 2));
-    if (this.logger) this.logger.info("curr: " + JSON.stringify({
-      "dev": curr.dev,
-      "ino": curr.ino,
-      "size": curr.size
-    }, null, 2));
-    // if (this.logger) this.logger.info("prev.ino: " + prev.ino+"");
-    // if (this.logger) this.logger.info("curr.ino: " + curr.ino+"");
-    
+    if (this.logger) {
+      this.logger.info(`--------------------------- ${new Date().getTime()}`);
+      // this.logger.info(`prev: ${JSON.stringify(prev, null, 2)}`);
+      // this.logger.info(`curr: ${JSON.stringify(curr, null, 2)}`);
+      this.logger.info(`prev: ${JSON.stringify({
+        "dev": prev.dev,
+        "ino": prev.ino,
+        "size": prev.size
+      }, null, 2)}`);
+      this.logger.info(`curr: ${JSON.stringify({
+        "dev": curr.dev,
+        "ino": curr.ino,
+        "size": curr.size
+      }, null, 2)}`);
+      // this.logger.info(`prev.ino: ${prev.ino+""}`);
+      // this.logger.info(`curr.ino: ${curr.ino+""}`);
+      if (this.mode) this.logger.info(`mode: ${this.mode}`);
+    }
+
     if (curr.ino > 0) {
       if (!this.online) this.emit("reappears");
-
-      // 0 1 2 3 4 (=5)
-      //
-      // 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 (=20)
-      //                     1  2  3  4  5  6  7  8  9  10
-      //
-      // 0 1 2 3 4 5 6 7 8 9 10 11 12 (=13)
-      //           1 2 3 4 5 6  7  8  |9  10|
-      //
-      // 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 (=15)
-      //           1 2 3 4 5 6  7  8  9  10
-      //
-      // 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 (=16)
-      //             1 2 3 4 5  6  7  8  9  10
-      
-      if (curr.size > prev.size) {
-        if ((this.queue.length === 0) && (this.buffer.length > 0) && !((prev.size - this.buffer.length) < 0)) {
-          prev.size = prev.size - this.buffer.length;
-          this.buffer = '';
-        }
-
-        var maxbytes = this.maxBytes || curr.size;
-        if (this.logger) this.logger.info(`maxbytes: ${maxbytes}`);
-
-        this.pos = curr.size;
-        this.queue.push({
-          start: ((curr.size - prev.size) > maxbytes) ? curr.size - maxbytes : prev.size, // prev.size,
-          end: curr.size
-        });
-        if (this.queue.length === 1) return this.internalDispatcher.emit("next");
-      }
-      else {
-        if (curr.size < prev.size) {
-          this.pos = curr.size;
-          this.queue = [];
-          this.buffer = '';
-          this.emit("truncated");
-        } 
-        else {
-          if ((this.queue.length === 0) && (this.buffer.length > 0) && !((prev.size - this.buffer.length) < 0)) {
-            prev.size = curr.size - this.buffer.length;
-            this.buffer = '';
-
-            this.pos = curr.size;
-            this.queue.push({
-              start: prev.size,
-              end: curr.size
-            });
-            if (this.queue.length === 1) return this.internalDispatcher.emit("next");
-          }
-        }
-      } 
     }
     else if (this.online) this.emit("disappears");
     this.online = (curr.ino > 0);
+
+
+    var maxbytes = this.maxBytes || curr.size;
+    if (this.logger) this.logger.info(`maxbytes: ${maxbytes}`);
+
+    if (curr.ino > 0) {
+      if (this.mode) {
+        if (this.logger) {
+          this.logger.info(`mode: ${this.mode}`);
+          this.logger.info(`rememberLast: ${this.rememberLast}`);
+        }
+
+        this.queue = [];
+        this.buffer = '';
+        this.pos = curr.size;
+        if (curr.size > 0) {
+          this.queue.push({
+            start: (curr.size > maxbytes) ? curr.size - maxbytes : 0,
+            end: curr.size
+          });
+          if (this.queue.length === 1) return this.internalDispatcher.emit("next");
+        }
+      }
+      else {
+        if (curr.size > prev.size) {
+          if ((this.queue.length === 0) && (this.buffer.length > 0) && !((prev.size - this.buffer.length) < 0)) {
+            prev.size = prev.size - this.buffer.length;
+            this.buffer = '';
+          }
+
+          this.pos = curr.size;
+          this.queue.push({
+            start: ((curr.size - prev.size) > maxbytes) ? curr.size - maxbytes : prev.size, // prev.size,
+            end: curr.size
+          });
+          if (this.queue.length === 1) return this.internalDispatcher.emit("next");
+        }
+        else {
+          if (curr.size < prev.size) {
+            this.pos = curr.size;
+            this.queue = [];
+            this.buffer = '';
+            this.emit("truncated");
+          } 
+          else {
+            if ((this.queue.length === 0) && (this.buffer.length > 0) && !((prev.size - this.buffer.length) < 0)) {
+              prev.size = curr.size - this.buffer.length;
+              this.buffer = '';
+
+              this.pos = curr.size;
+              this.queue.push({
+                start: prev.size,
+                end: curr.size
+              });
+              if (this.queue.length === 1) return this.internalDispatcher.emit("next");
+            }
+          }
+        }
+      }
+    }
   }
 
   unwatch() {
