@@ -13,29 +13,35 @@ module.exports = function(RED) {
         RED.nodes.createNode(this, config);
         
         this.filename = config.filename || "";
-        this.create = config.create || false;
+        this.mode = config.mode || "";
+        this.split = config.split || false;
+        this.separator = config.separator || "";
+        this.createFile = config.createFile || false;
         this.fromBeginning = config.fromBeginning || false;
+        this.rememberLast = config.rememberLast || false;
+        this.bytes = config.bytes || false;
+        this.maxBytes = config.maxBytes || 0;
         this.flushAtEOF = config.flushAtEOF || false;
         this.skipBlank = config.skipBlank || false;
         this.useTrim = config.useTrim || false;
         this.interval = config.interval || 0;
-        this.separator = config.separator || "";
         this.encoding = config.encoding || "";
         var node = this;
         var tail;
 
+        const errors = config.errors || false;
         const echo = config.echo || false;
         if (echo) node.warn("start");
 
         node.status({fill: "grey", shape: "ring", text: "waiting for file"});
         
         try {
-            if (!fs.existsSync(node.filename) && node.create) {
+            if (!fs.existsSync(node.filename) && node.createFile) {
                 fs.writeFileSync(node.filename, "");
             }
         }
         catch (err) {
-            node.error(err.toString());
+            if (errors || echo) node.error(err.toString());
             node.status({ fill: "red", shape: "dot", text: "create file error" });
         }
 
@@ -46,7 +52,7 @@ module.exports = function(RED) {
                 if (!fs.existsSync(node.filename)) {
                     // if (echo) node.warn("tick...");
                     if (interval == 0) {
-                        node.error("cannot open '" + node.filename + "' for reading: No such file or directory");
+                        if (errors || echo) node.error("cannot open '" + node.filename + "' for reading: No such file or directory");
                         interval = 1000;
                         clearInterval(timer);
                         timing();
@@ -54,7 +60,7 @@ module.exports = function(RED) {
                     return;
                 }
                 clearInterval(timer);
-                if (interval !== 0) node.error("'" + node.filename + "' has appeared, following new file");
+                if (errors || echo) if (interval !== 0) node.error("'" + node.filename + "' has appeared, following new file");
 
                 var options = {
                     logger: console,
@@ -62,11 +68,14 @@ module.exports = function(RED) {
                     // follow: true,
                     fsWatchOptions: {
                         persistent: true,
-                        interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 50)
+                        interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 100)
                     },
+                    mode: node.mode,
                     fromBeginning: node.fromBeginning,
+                    rememberLast: node.rememberLast,
+                    maxBytes: (parseInt(node.maxBytes) > 0 ? parseInt(node.maxBytes) : 0),
                     flushAtEOF: node.flushAtEOF,
-                    separator: new RegExp((node.separator.trim()!==""?node.separator.trim():"[\r]{0,1}\n"),"gi"),
+                    separator: new RegExp((node.separator.trim()!==""?node.separator.trim():"[\r]{0,1}\n"),"gi"),   // var re = new RegExp("a|b", "i"); // var re = /a|b/i;
                     encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8")
                 };
                 if (echo) node.warn(options);
@@ -88,34 +97,34 @@ module.exports = function(RED) {
                         });
                         
                         tail.on("disappears", function () {
-                            node.error("'" + this.filename + "' has become inaccessible: No such file or directory");
+                            if (errors || echo) node.error("'" + this.filename + "' has become inaccessible: No such file or directory");
                             node.status({fill: "grey", shape: "ring", text: "waiting for file"});
                         });
 
                         tail.on("reappears", function () {
-                            node.error("'" + this.filename + "' has appeared, following new file");
+                            if (errors || echo) node.error("'" + this.filename + "' has appeared, following new file");
                             node.status({fill: "green", shape: "dot", text: "active"});
                         });
 
                         tail.on("truncated", function () {
-                            node.error(this.filename + ": file truncated");
+                            if (errors || echo) node.error(this.filename + ": file truncated");
                             node.status({fill: "green", shape: "dot", text: "active"});
                         });
 
                         tail.on("error", function (error) {
-                            node.error(error.toString());
+                            if (errors || echo) node.error(error.toString());
                             node.status({fill: "red", shape: "dot", text: "error"});
                         });
 
                         node.status({fill: "green", shape: "dot", text: "active"});
                     } 
                     else {
-                        node.error("create tail error");
+                        if (errors || echo) node.error("create tail error");
                         node.status({fill: "red", shape: "dot", text: "create tail error"});
                     }
                 }
                 catch (err) {
-                    node.error(err.toString());
+                    if (errors || echo) node.error(err.toString());
                     node.status({fill: "red", shape: "dot", text: "initialize error"});
                 }            
                 
@@ -133,7 +142,7 @@ module.exports = function(RED) {
                     node.status({fill: "blue", shape: "dot", text: "active, not watching"});
                 } 
                 catch (err) {
-                    node.error(err.toString());
+                    if (errors || echo) node.error(err.toString());
                     node.status({fill: "red", shape: "dot", text: "unwatch error"});
                 }
                 tail = undefined;

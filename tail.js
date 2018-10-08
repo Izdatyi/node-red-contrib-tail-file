@@ -28,21 +28,26 @@ Tail = class Tail extends events.EventEmitter {
       if (block.end > block.start)
       {
         stream = fs.createReadStream(this.filename, {
+          flags: 'r', // 'rx' 'r+'
+          encoding: this.encoding,
           start: block.start,
           end: block.end - 1,
-          encoding: this.encoding
+          autoClose: true
         });
 
         stream.on('error', (error) => {
+          if (this.logger) this.logger.info("<error>");
           if (this.logger) this.logger.error(`Tail error: ${error}`);
           return this.emit('error', error);
         });
 
         stream.on('end', () => {
+          if (this.logger) this.logger.info("<end>");
           var x;
           x = this.queue.shift();
           if (this.queue.length > 0) this.internalDispatcher.emit("next");
           if (this.flushAtEOF && this.buffer.length > 0) {
+            if (this.logger) this.logger.info("end line: " +"|" + this.buffer + "|");
             this.emit("line", this.buffer);
             return this.buffer = '';
           }
@@ -50,6 +55,7 @@ Tail = class Tail extends events.EventEmitter {
         });
 
         return stream.on('data', (data) => {
+          if (this.logger) this.logger.info("<data>");
           var chunk, i, len, parts, results;
           if (this.separator === null) {
             return this.emit("line", data);
@@ -60,11 +66,12 @@ Tail = class Tail extends events.EventEmitter {
             results = [];
             for (i = 0, len = parts.length; i < len; i++) {
               chunk = parts[i];
+              if (this.logger) this.logger.info("data line: " + "|" + chunk + "|");
               results.push(this.emit("line", chunk));
             }
             return results;
           }
-          if (this.logger) this.logger.info("data length: " + this.buffer.length);
+          if (this.logger) this.logger.info("data length: " + this.buffer.length + ( (this.buffer.length>0)?(" |" + this.buffer + "|"):""));
         });
       }
     }
