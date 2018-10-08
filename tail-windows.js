@@ -36,7 +36,7 @@ module.exports = function(RED) {
         node.status({fill: "grey", shape: "ring", text: "waiting for file"});
         
         try {
-            if (!fs.existsSync(node.filename) && node.createFile) {
+            if (node.createFile && !fs.existsSync(node.filename)) {
                 fs.writeFileSync(node.filename, "");
             }
         }
