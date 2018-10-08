@@ -233,7 +233,7 @@ Tail = class Tail extends events.EventEmitter {
       //             1 2 3 4 5  6  7  8  9  10
       
       if (curr.size > prev.size) {
-        if ((this.buffer.length > 0) && !((prev.size - this.buffer.length) < 0)) {
+        if ((this.queue.length === 0) && (this.buffer.length > 0) && !((prev.size - this.buffer.length) < 0)) {
           prev.size = prev.size - this.buffer.length;
           this.buffer = '';
         }
@@ -256,7 +256,7 @@ Tail = class Tail extends events.EventEmitter {
           this.emit("truncated");
         } 
         else {
-          if ((this.buffer.length > 0) && !((prev.size - this.buffer.length) < 0)) {
+          if ((this.queue.length === 0) && (this.buffer.length > 0) && !((prev.size - this.buffer.length) < 0)) {
             prev.size = curr.size - this.buffer.length;
             this.buffer = '';
 
