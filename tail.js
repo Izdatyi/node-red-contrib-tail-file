@@ -81,6 +81,7 @@ Tail = class Tail extends events.EventEmitter {
     var fromBeginning;
     super(filename, options);
     this.readBlock = this.readBlock.bind(this);
+    this.change = this.change.bind(this);
     this.filename = filename;
     
     ({
@@ -97,14 +98,14 @@ Tail = class Tail extends events.EventEmitter {
 
     if (this.logger) {
       this.logger.info("<constructor>");
-      this.logger.info(`fsWatchOptions: ${JSON.stringify(this.fsWatchOptions, null, 2)}`);
+      this.logger.info(`fsWatchOptions: ${JSON.stringify(this.fsWatchOptions)}`);
       this.logger.info(`filename: ${this.filename}`);
       this.logger.info(`encoding: ${this.encoding}`);
       this.logger.info(`flushAtEOF: ${this.flushAtEOF}`);
       if (this.mode) this.logger.info(`mode: ${this.mode}`);
       if (this.mode) this.logger.info(`rememberLast: ${this.rememberLast}`);
       if (this.maxBytes) this.logger.info(`maxBytes: ${this.maxBytes}`);
-      if (this.separator) this.logger.info(`separator: ${this.separator}`);
+      if (this.separator) this.logger.info(`separator: ${this.separator.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '_')}`);
     }
 
     this.online = true;
@@ -144,13 +145,38 @@ Tail = class Tail extends events.EventEmitter {
     timing();
   }
 
+  change(filename) {
+    if (this.logger) this.logger.info("<change>");
+    var err, stats;
+    boundMethodCheck(this, Tail);
+    try {
+      stats = fs.statSync(filename);
+    } catch (error1) {
+      err = error1;
+      if (this.logger) this.logger.error(`'${e}' event for ${filename}. ${err}`);
+      this.emit("error", `'${e}' event for ${filename}. ${err}`);
+      return;
+    }
+    if (stats.size < this.pos) { //scenario where texts is not appended but it's actually a w+
+      this.pos = stats.size;
+    }
+    if (stats.size > this.pos) {
+      this.queue.push({
+        start: this.pos,
+        end: stats.size
+      });
+      this.pos = stats.size;
+      if (this.queue.length === 1) return this.internalDispatcher.emit("next");
+    }
+  }
+
   watch(fromBeginning) {
     if (this.logger) this.logger.info("<watch>");
     var err, stats;
 
     if (this.isWatching) return;
 
-    if (this.logger) this.logger.info(`enable watch. fromBeginning: ${fromBeginning}`);
+    if (this.logger) this.logger.info(`fromBeginning: ${fromBeginning}`);
 
     this.isWatching = true;
 
@@ -165,6 +191,7 @@ Tail = class Tail extends events.EventEmitter {
     }
 
     this.pos = fromBeginning ? 0 : stats.size;
+    if (this.pos === 0) this.change(this.filename);
 
     if (this.logger) this.logger.info("following file: ", this.filename);
 
@@ -214,7 +241,8 @@ Tail = class Tail extends events.EventEmitter {
           this.buffer = '';
         }
 
-        const maxbytes = 5 * 1024 * 1024;
+        var maxbytes = this.maxBytes || curr.size;
+        if (this.logger) this.logger.info(`maxbytes: ${maxbytes}`);
 
         this.pos = curr.size;
         this.queue.push({
