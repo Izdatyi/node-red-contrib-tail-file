@@ -216,10 +216,7 @@ Tail = class Tail extends events.EventEmitter {
     // if (this.logger) this.logger.info("curr.ino: " + curr.ino+"");
     
     if (curr.ino > 0) {
-      if (!this.online) {
-        if (this.logger) this.logger.info("'" + this.filename + "' has appeared, following new file");
-        this.emit("reappears");
-      }
+      if (!this.online) this.emit("reappears");
 
       // 0 1 2 3 4 (=5)
       //
@@ -273,12 +270,7 @@ Tail = class Tail extends events.EventEmitter {
         }
       } 
     }
-    else {
-      if (this.online) {
-        if (this.logger) this.logger.info("'" + this.filename + "' has become inaccessible: No such file or directory");
-        this.emit("disappears");
-      }
-    }
+    else if (this.online) this.emit("disappears");
     this.online = (curr.ino > 0);
   }
 
