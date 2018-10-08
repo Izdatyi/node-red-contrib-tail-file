@@ -50,15 +50,15 @@ module.exports = function(RED) {
             logger: config.echo ? console : null,
             fsWatchOptions: {
                 persistent: true,
-                interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 100)
+                interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 500)
             },
             encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8"),
-            mode: node.mode,
+            separator: (node.split ? RegExp(((node.separator.trim() !== "") ? node.separator.trim() : "[\r]{0,1}\n"), "gi") : ""),
             flushAtEOF: node.flushAtEOF,
             fromBeginning: node.fromBeginning,
-            rememberLast: node.rememberLast,
             maxBytes: (node.bytes ? ((parseInt(node.maxBytes) > 0) ? parseInt(node.maxBytes) : 5120) : 0),
-            separator: (node.split ? RegExp(((node.separator.trim() !== "") ? node.separator.trim() : "[\r]{0,1}\n"), "gi") : "")
+            mode: node.mode,
+            rememberLast: (node.mode ? node.rememberLast : false)
         };
         if (echo) node.warn(options);
 

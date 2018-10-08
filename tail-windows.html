@@ -85,7 +85,7 @@
 
     <div class="form-row">
         <label for="node-input-interval"><i class="fa fa-refresh"></i> Interval</label>
-        <input type="text" id="node-input-interval" placeholder="100" style="width: 65px;">
+        <input type="text" id="node-input-interval" placeholder="500" style="width: 65px;">
         &nbsp;<span>milliseconds</span>
     </div>
 
@@ -116,14 +116,14 @@
             filename: {value: "e:/www.txt", required: true},    // e:/www.txt
             createFile: {value: false},
             encoding: {value: "utf-8"},
-            mode: {value: ""},
-            split: {value: true},
+            mode: {value: "replaced"},
+            split: {value: false},
             separator: {value: ""},
             flushAtEOF: {value: false},
             fromBeginning: {value: false},
-            rememberLast: {value: false},
+            rememberLast: {value: true},
             bytes: {value: false},
-            maxBytes: {value: ""},
+            maxBytes: {value: "16"},
             skipBlank: {value: false},
             useTrim: {value: false},
             errors: {value: true},
