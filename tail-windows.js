@@ -18,8 +18,8 @@ module.exports = function(RED) {
         this.mode = config.mode || "";
         this.split = config.split || false;
         this.separator = config.separator || "";
-        this.flushAtEOF = config.flushAtEOF || false;
         this.fromBeginning = config.fromBeginning || false;
+        this.flushAtEOF = config.flushAtEOF || false;
         this.rememberLast = config.rememberLast || false;
         this.bytes = config.bytes || false;
         this.maxBytes = config.maxBytes || 0;
@@ -54,10 +54,10 @@ module.exports = function(RED) {
             },
             encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8"),
             separator: (node.split ? RegExp(((node.separator.trim() !== "") ? node.separator.trim() : "[\r]{0,1}\n"), "gi") : ""),
-            flushAtEOF: node.flushAtEOF,
             fromBeginning: node.fromBeginning,
             maxBytes: (node.bytes ? ((parseInt(node.maxBytes) > 0) ? parseInt(node.maxBytes) : 5120) : 0),
             mode: node.mode,
+            flushAtEOF: node.flushAtEOF,
             rememberLast: (node.mode ? node.rememberLast : false)
         };
         if (echo) node.warn(options);
@@ -96,6 +96,11 @@ module.exports = function(RED) {
                 tail.on("reappears", function () {
                     if (errors || echo) node.error(`'${node.filename}' has appeared, following new file`);
                     node.status({fill: "green", shape: "dot", text: "active"});
+                });
+
+                tail.on("notfound", function (entry, buffer) {
+                    if (errors || echo) node.error(`'${node.filename}' last entry not found! ENTRY='${entry}'; BUFFER='${buffer}'`);
+                    node.status({fill: "red", shape: "ring", text: "entry not found"});
                 });
 
                 tail.on("error", function (error) {

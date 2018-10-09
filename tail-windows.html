@@ -41,17 +41,17 @@
 
     <div class="form-row">
         <label><i class="fa fa-bars"></i><span> Optional</span></label>
-        <input type="checkbox" id="node-input-flushAtEOF" style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-flushAtEOF" style="width: 70%;"><span>Flush at EOF</span></label>
-    </div>
-
-    <div class="form-row" id="node-tail-windows-fromBeginning">
-        <label>&nbsp;</label>
         <input type="checkbox" id="node-input-fromBeginning" style="display: inline-block; width: auto; vertical-align: top;">
         <label for="node-input-fromBeginning" style="width: 70%;"><span>From beginning</span></label>
     </div>
 
-    <div class="form-row" id="node-tail-windows-rememberLast">
+    <div class="form-row" id="node-tail-windows-flush">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-flushAtEOF" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-flushAtEOF" style="width: 70%;"><span>Flush at EOF</span></label>
+    </div>
+
+    <div class="form-row" id="node-tail-windows-remember">
         <label>&nbsp;</label>
         <input type="checkbox" id="node-input-rememberLast" style="display: inline-block; width: auto; vertical-align: top;">
         <label for="node-input-rememberLast" style="width: 70%;"><span>Try to remember the last entry</span></label>
@@ -71,10 +71,11 @@
         <label for="node-input-skipBlank" style="width: 70%;"><span>Skip blank entries</span></label>
     </div>
 
-    <div class="form-row" id="node-tail-windows-trim">
+    <div class="form-row" id="node-tail-windows-trim" style="display: block;">
         <label>&nbsp;</label>
+        <label style="width: auto;" for="node-input-useTrim"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span></label>
         <input type="checkbox" id="node-input-useTrim" style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-useTrim" style="width: 70%;"><span>Use .trim() to check for blank entries</span></label>
+        <label for="node-input-useTrim" style="width: 66%;"><span>Use .trim() to check for blank entries</span></label>
     </div>
 
     <div class="form-row">
@@ -114,16 +115,16 @@
         defaults: {
             echo: {value: true},
             filename: {value: "e:/www.txt", required: true},    // e:/www.txt
-            createFile: {value: false},
+            createFile: {value: true},
             encoding: {value: "utf-8"},
             mode: {value: "replaced"},
             split: {value: false},
             separator: {value: ""},
-            flushAtEOF: {value: false},
             fromBeginning: {value: false},
+            flushAtEOF: {value: false},
             rememberLast: {value: true},
-            bytes: {value: false},
-            maxBytes: {value: "16"},
+            bytes: {value: true},
+            maxBytes: {value: ""},
             skipBlank: {value: false},
             useTrim: {value: false},
             errors: {value: true},
@@ -146,12 +147,12 @@
             })
             $("#node-input-mode").on("change",function() {
                 if (this.value === "") {
-                    $("#node-tail-windows-fromBeginning").show();
-                    $("#node-tail-windows-rememberLast").hide();
+                    $("#node-tail-windows-flush").show();
+                    $("#node-tail-windows-remember").hide();
                 }
                 else {
-                    $("#node-tail-windows-fromBeginning").hide();
-                    $("#node-tail-windows-rememberLast").show();
+                    $("#node-tail-windows-flush").hide();
+                    $("#node-tail-windows-remember").show();
                 }
             });
             $("#node-input-bytes").change(function() {
