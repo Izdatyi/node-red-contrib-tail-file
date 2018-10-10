@@ -33,10 +33,10 @@
     </div>
 
     <div class="form-row">
-        <label><i class="fa fa-code"></i> Split</label>
+        <label for="node-input-separator"><i class="fa fa-code"></i> Split</label>
         <input type="checkbox" id="node-input-split" style="display: inline-block; width: auto; margin: auto;">
         <label for="node-input-split" style="width: auto;"><span style="vertical-align: middle;">Use separator:&nbsp;</span></label>
-        <input type="text" id="node-input-separator" placeholder="[\r]{0,1}\n" style="width: 150px;">
+        <input type="text" id="node-input-separator" placeholder="[\r]{0,1}\n" style="width: 160px;">
     </div>
 
     <div class="form-row">
@@ -61,7 +61,7 @@
         <label>&nbsp;</label>
         <input type="checkbox" id="node-input-bytes" style="display: inline-block; width: auto; margin: auto;">
         <label for="node-input-bytes" style="width: auto;"><span style="vertical-align: middle;">Maximum in one read:&nbsp;</span></label>
-        <input type="text" id="node-input-maxBytes" placeholder="5120" style="width: 62px; height: 28px;">
+        <input type="number" min="1" id="node-input-maxBytes" placeholder="5120" style="width: 70px; height: 28px;">
         <label for="node-input-bytes" style="width: auto;"><span style="vertical-align: middle;">&nbsp;bytes</span></label>
     </div>
 
@@ -73,9 +73,9 @@
 
     <div class="form-row" id="node-tail-windows-trim" style="display: block;">
         <label>&nbsp;</label>
-        <label style="width: auto;" for="node-input-useTrim"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span></label>
+        <label style="width: 15px;" label=""></label>
         <input type="checkbox" id="node-input-useTrim" style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-useTrim" style="width: 66%;"><span>Use .trim() to check for blank entries</span></label>
+        <label for="node-input-useTrim" style="width: 65%;"><span>Use .trim() to check for blank entries</span></label>
     </div>
 
     <div class="form-row">
@@ -86,7 +86,7 @@
 
     <div class="form-row">
         <label for="node-input-interval"><i class="fa fa-refresh"></i> Interval</label>
-        <input type="text" id="node-input-interval" placeholder="100" style="width: 65px;">
+        <input type="number" min="1" id="node-input-interval" placeholder="100" style="width: 70px;">
         &nbsp;<span>milliseconds</span>
     </div>
 
