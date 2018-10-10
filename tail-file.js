@@ -11,7 +11,7 @@ module.exports = function(RED) {
     
     function TailFileNode(config) {
         RED.nodes.createNode(this, config);
-        
+
         this.filename = config.filename || "";
         this.createFile = config.createFile || false;
         this.encoding = config.encoding || "";
@@ -31,109 +31,147 @@ module.exports = function(RED) {
 
         const errors = config.errors || false;
         const echo = config.echo || false;
-        if (echo) node.warn("Start");
+        if (echo) node.warn(`Start`);
 
-        node.status({fill: "grey", shape: "ring", text: "waiting for file"});
+
+        node.status({ fill: "grey", shape: "ring", text: "waiting for file" });
+        start();
+
         
-        try {
-            if (node.createFile && !fs.existsSync(node.filename)) {
-                fs.writeFileSync(node.filename, "");
+        function start(callback)
+        {
+            try {
+                if (node.createFile && !fs.existsSync(node.filename)) {
+                    fs.writeFileSync(node.filename, "");
+                }
             }
-        }
-        catch (err) {
-            if (errors || echo) node.error(err.toString());
-            node.status({ fill: "red", shape: "dot", text: "create file error" });
-        }
-
-
-        var options = {
-            logger: config.echo ? console : null,
-            fsWatchOptions: {
-                persistent: true,
-                interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 100)
-            },
-            encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8"),
-            separator: (node.split ? RegExp(((node.separator.trim() !== "") ? node.separator.trim() : "[\r]{0,1}\n"), "gi") : ""),
-            fromBeginning: node.fromBeginning,
-            maxBytes: (node.bytes ? ((parseInt(node.maxBytes) > 0) ? parseInt(node.maxBytes) : 5120) : 0),
-            mode: node.mode,
-            flushAtEOF: node.flushAtEOF,
-            rememberLast: (node.mode ? node.rememberLast : false)
-        };
-        if (echo) node.warn(options);
-
-        try {
-            tail = new Tail(node.filename, options);
-            if (tail) 
-            {
-                tail.on("line", function (data) {
-                    if (!node.skipBlank || ((node.useTrim ? data.toString().trim() : data.toString()) !== "")) {
-                        node.send({
-                            payload: data,
-                            topic: node.filename
-                        });
-                    }
-                    node.status({fill: "green", shape: "dot", text: "active"});
-                });
-
-                tail.on("truncated", function () {
-                    if (errors || echo) node.error(`${node.filename}: file truncated`);
-                    node.status({fill: "green", shape: "dot", text: "active"});
-                });    
-
-                tail.on("noent", function () {
-                    if (errors || echo) node.error(`cannot open '${node.filename}' for reading: No such file or directory`);
-                    node.status({fill: "grey", shape: "ring", text: "waiting for file"});
-                });
-
-                tail.on("disappears", function () {
-                    if (errors || echo) node.error(`'${node.filename}' has become inaccessible: No such file or directory`);
-                    node.status({fill: "grey", shape: "ring", text: "waiting for file"});
-                });
-
-                tail.on("reappears", function () {
-                    if (errors || echo) node.error(`'${node.filename}' has appeared, following new file`);
-                    node.status({fill: "green", shape: "dot", text: "active"});
-                });
-
-                tail.on("notfound", function (entry, buffer) {
-                    if (errors || echo) node.error(`'${node.filename}' last entry not found! ENTRY='${entry}'; BUFFER='${buffer}'`);
-                    node.status({fill: "red", shape: "ring", text: "entry not found"});
-                });
-
-                tail.on("error", function (error) {
-                    if (errors || echo) node.error(error.toString());
-                    node.status({fill: "red", shape: "dot", text: "error"});
-                    tail.unwatch();
-                });
-
-                node.status({fill: "green", shape: "dot", text: "active"});
-            } 
-            else {
-                if (errors || echo) node.error("create tail error");
-                node.status({fill: "red", shape: "dot", text: "create tail error"});
+            catch (err) {
+                if (errors || echo) node.error(err.toString());
+                node.status({ fill: "red", shape: "dot", text: "create file error" });
             }
-        }
-        catch (err) {
-            if (errors || echo) node.error(err.toString());
-            node.status({fill: "red", shape: "dot", text: "initialize error"});
+
+
+            var options = {
+                logger: config.echo ? console : null,
+                fsWatchOptions: {
+                    persistent: true,
+                    interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 100)
+                },
+                encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8"),
+                separator: (node.split ? RegExp(((node.separator.trim() !== "") ? node.separator.trim() : "[\r]{0,1}\n"), "gi") : ""),
+                fromBeginning: node.fromBeginning,
+                maxBytes: (node.bytes ? ((parseInt(node.maxBytes) > 0) ? parseInt(node.maxBytes) : 5120) : 0),
+                mode: node.mode,
+                flushAtEOF: node.flushAtEOF,
+                rememberLast: (node.mode ? node.rememberLast : false)
+            };
+            if (echo) node.warn(options);
+
+            try {
+                tail = new Tail(node.filename, options);
+                if (tail) {
+                    tail.on("line", function (data) {
+                        if (!node.skipBlank || ((node.useTrim ? data.toString().trim() : data.toString()) !== "")) {
+                            node.send({
+                                payload: data,
+                                topic: node.filename
+                            });
+                        }
+                        node.status({ fill: "green", shape: "dot", text: "active" });
+                    });
+
+                    tail.on("truncated", function () {
+                        if (errors || echo) node.error(`${node.filename}: file truncated`);
+                        node.status({ fill: "green", shape: "dot", text: "active" });
+                    });
+
+                    tail.on("noent", function () {
+                        if ((errors || echo) && (node.filename)) node.error(`cannot open '${node.filename}' for reading: No such file or directory`);
+                        node.status({ fill: "grey", shape: "ring", text: "waiting for file" });
+                    });
+
+                    tail.on("disappears", function () {
+                        if (errors || echo) node.error(`'${node.filename}' has become inaccessible: No such file or directory`);
+                        node.status({ fill: "grey", shape: "ring", text: "waiting for file" });
+                    });
+
+                    tail.on("reappears", function () {
+                        if (errors || echo) node.error(`'${node.filename}' has appeared, following new file`);
+                        node.status({ fill: "green", shape: "dot", text: "active" });
+                    });
+
+                    tail.on("notfound", function (entry, buffer) {
+                        if (errors || echo) node.error(`'${node.filename}' last entry not found! ENTRY='${entry}'; BUFFER='${buffer}'`);
+                        node.status({ fill: "red", shape: "ring", text: "entry not found" });
+                    });
+
+                    tail.on("error", function (error) {
+                        if (errors || echo) node.error(error.toString());
+                        node.status({ fill: "red", shape: "dot", text: "error" });
+                        stop();
+                    });
+
+                    if ((errors || echo) && (node.filename)) node.error(`${node.filename}: tail started`);
+                    node.status({ fill: "green", shape: "dot", text: "active" });
+                }
+                else {
+                    if (errors || echo) node.error(`create tail error`);
+                    node.status({ fill: "red", shape: "dot", text: "create tail error" });
+                }
+            }
+            catch (err) {
+                if (errors || echo) node.error(err.toString());
+                node.status({ fill: "red", shape: "dot", text: "initialize error" });
+            }
+            if (callback) callback();
         }
 
 
-        this.on("close", function() {
+        function stop(callback) {
             if (tail) {
                 try {
                     tail.unwatch();
-                    node.status({fill: "blue", shape: "dot", text: "active, not watching"});
-                } 
+                    if ((errors || echo) && (node.filename)) node.error(`${node.filename}: tail stopped`);
+                    node.status({ fill: "grey", shape: "ring", text: "stopped" });
+                }
                 catch (err) {
                     if (errors || echo) node.error(err.toString());
-                    node.status({fill: "red", shape: "dot", text: "unwatch error"});
+                    node.status({ fill: "red", shape: "dot", text: "unwatch error" });
                 }
                 tail = undefined;
-                if (echo) node.warn("Unwatch");
             }
-            node.status({});
+            if (callback) callback();
+        }
+
+
+        this.on("close", function () {
+            stop(function () {
+                node.status({});
+                if (echo) node.warn(`Unwatch`);
+            });
+        });
+
+
+        this.on('input', function(msg) {
+            switch ((msg.topic).toLowerCase()) 
+            {
+                case "tail-file-stop".toLowerCase():
+                    stop();
+                    break;
+
+                case "tail-file-start".toLowerCase():
+                    stop(function () {
+                        start();
+                    });
+                    break;
+                
+                case "tail-file-filename".toLowerCase():
+                    stop(function () {
+                        node.filename = msg.payload.toString() || "";
+                        start();
+                    });
+                    break;
+            }
         });
     }
 
