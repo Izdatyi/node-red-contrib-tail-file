@@ -1,23 +1,23 @@
 {
-  "name": "node-red-contrib-tail-windows",
+  "name": "node-red-contrib-tail-file",
   "version": "1.0.4",
-  "description": "tail for Windows",
+  "description": "tail for file",
   "author": "Izdatyi",
   "license": "Apache-2.0",
   "keywords": [
     "node-red",
     "tail",
-    "tail-windows",
+    "tail-file",
     "windows"
   ],
   "node-red": {
     "nodes": {
-      "tail windows": "tail-windows.js"
+      "tail file": "tail-file.js"
     }
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Izdatyi/node-red-contrib-tail-windows.git"
+    "url": "https://github.com/Izdatyi/node-red-contrib-tail-file.git"
   },
   "dependencies": {}
 }
