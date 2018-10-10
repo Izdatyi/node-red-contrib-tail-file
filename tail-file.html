@@ -115,9 +115,9 @@
         defaults: {
             echo: { value: true },
             filename: { value: "e:/www.txt", required: true },    // e:/www.txt
-            createFile: { value: true },
+            createFile: { value: false },
             encoding: { value: "utf-8" },
-            mode: { value: "replaced" },
+            mode: { value: "" },
             split: { value: true },
             separator: { value: "" },
             fromBeginning: { value: false },
@@ -126,7 +126,7 @@
             bytes: { value: true },
             maxBytes: { value: "" },
             skipBlank: { value: false },
-            useTrim: { value: false },
+            useTrim: { value: true },
             errors: { value: true },
             interval: { value: "" },
             name: { value: "" }
