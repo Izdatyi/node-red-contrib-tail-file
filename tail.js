@@ -133,30 +133,6 @@ Tail = class Tail extends events.EventEmitter {
             }
           }
 
-          // //////////////////////////////////////////////////////////////
-          // if (this.mode && this.rememberLast)
-          // {
-          //   if (this.logger) {
-          //     this.logger.info(`last: (${this.last.length}) '${this.last.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '\\_').substr(-60)}'`);
-          //     this.logger.info(`data.length: ${data.length}`);
-          //   }
-
-          //   if ((this.last.length > 0) && (data.length >= this.last.length)) {
-          //     pos = data.indexOf(this.last);
-          //     if (pos !== -1) pos = pos + this.last.length;
-          //   }
-
-          //   this.last = data.slice(-1024);
-
-          //   if (pos >= 0) {
-          //     if (this.logger) this.logger.info(`pos: ${pos}`);
-          //     data = data.slice(pos);
-          //     if (this.logger) this.logger.info(`new data.length: ${data.length}`);
-          //   }
-
-          //   if (this.logger) this.logger.info(`new last: (${this.last.length}) '${this.last.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '\\_').substr(-60)}'`);
-          // }
-
           if (this.logger) this.logger.info(`data buffer: (${this.buffer.length}) '${this.buffer.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '\\_')}'`);
         });
       }

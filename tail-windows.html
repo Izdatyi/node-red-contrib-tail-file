@@ -110,59 +110,57 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('tail-windows',{
+    RED.nodes.registerType('tail-windows', {
         category: 'storage-input',
         defaults: {
-            echo: {value: true},
-            filename: {value: "e:/www.txt", required: true},    // e:/www.txt
-            createFile: {value: true},
-            encoding: {value: "utf-8"},
-            mode: {value: "replaced"},
-            split: {value: false},
-            separator: {value: ""},
-            fromBeginning: {value: false},
-            flushAtEOF: {value: false},
-            rememberLast: {value: true},
-            bytes: {value: true},
-            maxBytes: {value: ""},
-            skipBlank: {value: false},
-            useTrim: {value: false},
-            errors: {value: true},
-            interval: {value: ""},
-            name: {value: ""}
+            echo: { value: true },
+            filename: { value: "e:/www.txt", required: true },    // e:/www.txt
+            createFile: { value: true },
+            encoding: { value: "utf-8" },
+            mode: { value: "replaced" },
+            split: { value: true },
+            separator: { value: "" },
+            fromBeginning: { value: false },
+            flushAtEOF: { value: false },
+            rememberLast: { value: true },
+            bytes: { value: true },
+            maxBytes: { value: "" },
+            skipBlank: { value: false },
+            useTrim: { value: false },
+            errors: { value: true },
+            interval: { value: "" },
+            name: { value: "" }
         },
         color: "burlywood",
         inputs: 0,
         outputs: 1,
         icon: "file.png",
-        label: function() {
-            return this.name||this.filename||"tail windows";
+        label: function () {
+            return this.name || this.filename || "tail windows";
         },
-        labelStyle: function() {
-            return this.name?"node_label_italic":"";
+        labelStyle: function () {
+            return this.name ? "node_label_italic" : "";
         },
-        oneditprepare: function() {
-            $("#node-input-split").change(function() {
+        oneditprepare: function () {
+            $("#node-input-split").change(function () {
                 $("#node-input-separator").attr('disabled', !$("#node-input-split").prop('checked'));
             })
-            $("#node-input-mode").on("change",function() {
+            $("#node-input-mode").on("change", function () {
                 if (this.value === "") {
                     $("#node-tail-windows-flush").show();
                     $("#node-tail-windows-remember").hide();
-                }
-                else {
+                } else {
                     $("#node-tail-windows-flush").hide();
                     $("#node-tail-windows-remember").show();
                 }
             });
-            $("#node-input-bytes").change(function() {
+            $("#node-input-bytes").change(function () {
                 $("#node-input-maxBytes").attr('disabled', !$("#node-input-bytes").prop('checked'));
             })
-            $("#node-input-skipBlank").on("change",function() {
+            $("#node-input-skipBlank").on("change", function () {
                 if (this.checked === true) {
                     $("#node-tail-windows-trim").show();
-                }
-                else {
+                } else {
                     $("#node-tail-windows-trim").hide();
                 }
             });
