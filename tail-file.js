@@ -144,10 +144,11 @@ module.exports = function(RED) {
         }
 
 
-        this.on("close", function () {
+        this.on('close', function(done) {
             stop(function () {
                 node.status({});
                 if (echo) node.warn(`Unwatch`);
+                done();
             });
         });
 
