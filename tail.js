@@ -196,7 +196,7 @@ Tail = class Tail extends events.EventEmitter {
     var interval = 0;
     var timing = function () {
       timer = setInterval(function () {
-        if (!fs.existsSync(this.filename)) {
+        if (!this.filename || !fs.existsSync(this.filename)) {
           if (interval == 0) {
             this.emit("noent");
             interval = 1000;
