@@ -67,8 +67,6 @@ module.exports = function(RED) {
             if (tail) 
             {
                 tail.on("line", function (data) {
-                    // if (echo) node.warn(`line. skipBlank: ${node.skipBlank}${(node.skipBlank ? `; useTrim: ${node.useTrim}` : "")}`);
-                    
                     if (!node.skipBlank || ((node.useTrim ? data.toString().trim() : data.toString()) !== "")) {
                         node.send({
                             payload: data,

@@ -85,7 +85,6 @@ Tail = class Tail extends events.EventEmitter {
                 this.emit('notfound', this.last, this.buffer);
               }
 
-              // this.last = this.buffer.slice(-parseInt(((this.buffer.length * 10 / 100) > 1024) ? 1024 : (this.buffer.length * 10 / 100)));
               this.last = this.buffer.slice(-512);
 
               if (pos >= 0) {
@@ -198,7 +197,6 @@ Tail = class Tail extends events.EventEmitter {
     var interval = 0;
     var timing = function () {
       timer = setInterval(function () {
-        // if (this.logger) this.logger.info(`tick... interval: ${interval}`);
         if (!fs.existsSync(this.filename)) {
           if (interval == 0) {
             this.emit("noent");
@@ -230,7 +228,7 @@ Tail = class Tail extends events.EventEmitter {
       this.emit("error", `'${e}' event for ${filename}. ${err}`);
       return;
     }
-    if (stats.size < this.pos) { //scenario where texts is not appended but it's actually a w+
+    if (stats.size < this.pos) {
       this.pos = stats.size;
     }
     if (stats.size > this.pos) {
@@ -326,8 +324,6 @@ Tail = class Tail extends events.EventEmitter {
       }
       else {
         if (this.logger) {
-          // this.logger.info(`prev: ${JSON.stringify(prev, null, 2)}`);
-          // this.logger.info(`curr: ${JSON.stringify(curr, null, 2)}`);
           this.logger.info(`prev: ${JSON.stringify({
             "dev": prev.dev,
             "ino": prev.ino,
@@ -338,8 +334,6 @@ Tail = class Tail extends events.EventEmitter {
             "ino": curr.ino,
             "size": curr.size
           }, null, 2)}`);
-          // this.logger.info(`prev.ino: ${prev.ino+""}`);
-          // this.logger.info(`curr.ino: ${curr.ino+""}`);
         }
 
         if (curr.size > prev.size) {
