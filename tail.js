@@ -27,14 +27,14 @@ Tail = class Tail extends events.EventEmitter {
       block = this.queue[0];
       if (block.end > block.start)
       {
-        var splitData = function (buffer) {
+        var splitData = function () {
           var chunk, i, len, parts, results;
-          parts = buffer.split(this.separator);
-          buffer = parts.pop();
+          parts = this.buffer.split(this.separator);
+          this.buffer = parts.pop();
           results = [];
           for (i = 0, len = parts.length; i < len; i++) {
             chunk = parts[i];
-            if (this.logger) this.logger.info(`data chunk: (${chunk.length}) '${chunk.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n')}'`);
+            if (this.logger) this.logger.info(`split chunk: (${chunk.length}) '${chunk.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n')}'`);
             results.push(this.emit("line", chunk));
           }
           return results;
@@ -96,7 +96,6 @@ Tail = class Tail extends events.EventEmitter {
               if (this.logger) this.logger.info(`new last: (${this.last.length}) '...${this.last.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').substr(-70)}'`);
             }
 
-
             if (this.buffer.length > 0) {
               if (this.logger) this.logger.info(`buffer line: (${this.buffer.length})`);
               if (!this.separator) {
@@ -104,14 +103,14 @@ Tail = class Tail extends events.EventEmitter {
                 return this.buffer = '';
               }
               else {
-                splitData(this.buffer);
+                splitData();
                 return this.buffer = '';
               }
             }
           }
           else {
             if (this.flushAtEOF && this.buffer.length > 0) {
-              if (this.logger) this.logger.info(`buffer line: ${this.buffer.length}`);
+              if (this.logger) this.logger.info(`buffer line: (${this.buffer.length}) '${this.buffer.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n')}'`);
               this.emit("line", this.buffer);
               return this.buffer = '';
             }
@@ -138,7 +137,7 @@ Tail = class Tail extends events.EventEmitter {
             }
             else {
               this.buffer += data;
-              return splitData(this.buffer);
+              return splitData();
             }
           }
 
