@@ -198,7 +198,7 @@ Tail = class Tail extends events.EventEmitter {
     var timing = function () {
       timer = setInterval(function () {
         // if (this.logger) this.logger.info(`tick... interval: ${interval}`);
-        if (!fs.existsSync(this.filename)) {
+        if (!this.filename || !fs.existsSync(this.filename)) {
           if (interval == 0) {
             this.emit("noent");
             interval = 1000;
