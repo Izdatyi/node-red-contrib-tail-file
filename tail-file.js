@@ -88,7 +88,7 @@ module.exports = function(RED) {
                     });
 
                     tail.on("noent", function () {
-                        if (errors || echo) node.error(`cannot open '${node.filename}' for reading: No such file or directory`);
+                        if ((errors || echo) && (node.filename)) node.error(`cannot open '${node.filename}' for reading: No such file or directory`);
                         node.status({ fill: "grey", shape: "ring", text: "waiting for file" });
                     });
 
@@ -110,10 +110,10 @@ module.exports = function(RED) {
                     tail.on("error", function (error) {
                         if (errors || echo) node.error(error.toString());
                         node.status({ fill: "red", shape: "dot", text: "error" });
-                        tail.unwatch();
+                        stop();
                     });
 
-                    if (errors || echo) node.error(`${node.filename}: tail started`);
+                    if ((errors || echo) && (node.filename)) node.error(`${node.filename}: tail started`);
                     node.status({ fill: "green", shape: "dot", text: "active" });
                 }
                 else {
@@ -133,7 +133,7 @@ module.exports = function(RED) {
             if (tail) {
                 try {
                     tail.unwatch();
-                    if (errors || echo) node.error(`${node.filename}: tail stopped`);
+                    if ((errors || echo) && (node.filename)) node.error(`${node.filename}: tail stopped`);
                     node.status({ fill: "grey", shape: "ring", text: "stopped" });
                 }
                 catch (err) {
@@ -158,6 +158,10 @@ module.exports = function(RED) {
             // if (echo) node.warn(msg);
             switch ((msg.topic).toLowerCase()) 
             {
+                case "tail-file-stop".toLowerCase():
+                    stop();
+                    break;
+
                 case "tail-file-start".toLowerCase():
                     stop(function () {
                         // if (echo) node.warn(`tail: ${tail}`);
@@ -165,10 +169,6 @@ module.exports = function(RED) {
                     });
                     break;
                 
-                case "tail-file-stop".toLowerCase():
-                    stop();
-                    break;
-
                 case "tail-file-filename".toLowerCase():
                     stop(function () {
                         node.filename = msg.payload.toString() || "";
