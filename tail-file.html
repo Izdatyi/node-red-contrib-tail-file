@@ -92,7 +92,7 @@
     RED.nodes.registerType('tail-file', {
         category: 'storage-input',
         defaults: {
-            filename: { value: "", required: true },
+            filename: { value: "" },
             createFile: { value: false },
             encoding: { value: "utf-8" },
             mode: { value: "" },
@@ -103,7 +103,7 @@
             rememberLast: { value: true },
             bytes: { value: true },
             maxBytes: { value: "" },
-            skipBlank: { value: false },
+            skipBlank: { value: true },
             useTrim: { value: true },
             errors: { value: true },
             interval: { value: "" },
