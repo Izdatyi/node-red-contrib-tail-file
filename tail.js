@@ -41,7 +41,7 @@ Tail = class Tail extends events.EventEmitter {
         }.bind(this)
         
         stream = fs.createReadStream(this.filename, {
-          flags: 'r', // 'rx' 'r+'
+          flags: 'r',
           encoding: this.encoding,
           start: block.start,
           end: block.end - 1,
@@ -260,7 +260,6 @@ Tail = class Tail extends events.EventEmitter {
     }
     
     if (this.mode) {
-      // this.pos = 0;
       this.pos = fromBeginning ? 0 : stats.size;
       this.change(this.filename);
     }
@@ -344,7 +343,7 @@ Tail = class Tail extends events.EventEmitter {
 
           this.pos = curr.size;
           this.queue.push({
-            start: ((curr.size - prev.size) > maxbytes) ? curr.size - maxbytes : prev.size, // prev.size,
+            start: ((curr.size - prev.size) > maxbytes) ? curr.size - maxbytes : prev.size,
             end: curr.size
           });
           if (this.queue.length === 1) return this.internalDispatcher.emit("next");
