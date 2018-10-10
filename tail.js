@@ -27,6 +27,19 @@ Tail = class Tail extends events.EventEmitter {
       block = this.queue[0];
       if (block.end > block.start)
       {
+        var splitData = function (buffer) {
+          var chunk, i, len, parts, results;
+          parts = buffer.split(this.separator);
+          buffer = parts.pop();
+          results = [];
+          for (i = 0, len = parts.length; i < len; i++) {
+            chunk = parts[i];
+            if (this.logger) this.logger.info(`data chunk: (${chunk.length}) '${chunk.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n')}'`);
+            results.push(this.emit("line", chunk));
+          }
+          return results;
+        }.bind(this)
+        
         stream = fs.createReadStream(this.filename, {
           flags: 'r', // 'rx' 'r+'
           encoding: this.encoding,
@@ -87,8 +100,14 @@ Tail = class Tail extends events.EventEmitter {
 
             if (this.buffer.length > 0) {
               if (this.logger) this.logger.info(`buffer line: (${this.buffer.length})`);
-              this.emit("line", this.buffer);
-              return this.buffer = '';
+              if (!this.separator) {
+                this.emit("line", this.buffer);
+                return this.buffer = '';
+              }
+              else {
+                splitData(this.buffer);
+                return this.buffer = '';
+              }
             }
           }
           else {
@@ -109,8 +128,7 @@ Tail = class Tail extends events.EventEmitter {
             if (!this.mode && this.separator) this.logger.info(`separator: ${this.separator.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '_')}`);
             this.logger.info(`data.length: ${data.length}`);
           }
-          var chunk, i, len, parts, results, pos;
-                    
+
           if (this.mode) {
             return this.buffer += data;
           }
@@ -121,15 +139,7 @@ Tail = class Tail extends events.EventEmitter {
             }
             else {
               this.buffer += data;
-              parts = this.buffer.split(this.separator);
-              this.buffer = parts.pop();
-              results = [];
-              for (i = 0, len = parts.length; i < len; i++) {
-                chunk = parts[i];
-                if (this.logger) this.logger.info(`data chunk: (${chunk.length}) '${chunk.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n')}'`);
-                results.push(this.emit("line", chunk));
-              }
-              return results;
+              return splitData(this.buffer);
             }
           }
 
