@@ -1,6 +1,7 @@
 node_modules
 package-lock.json
 notes.txt
-tail-windows.*.html
-tail-windows.*.js
+work.code-workspace
+tail-file.*.html
+tail-file.*.js
 tail.*.js
