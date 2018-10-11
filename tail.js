@@ -373,87 +373,79 @@ Tail = class Tail extends events.EventEmitter {
             if (this.mode) this.logger.info(`mode: ${this.mode}`);
         }
 
-        // if (curr.ino > 0) {
-        //     if (!this.online) this.emit("reappears");
-        // }
-        // else if (this.online) this.emit("disappears");
-        // this.online = (curr.ino > 0);
-
-
         var maxbytes = this.maxBytes || this.curr.size;
         if (this.logger) this.logger.info(`maxbytes: ${maxbytes}`);
 
-        // if (curr.ino > 0) {
-            if (this.mode) {
-                if (this.logger) this.logger.info(`curr.size: ${this.curr.size}`);
 
-                this.queue = [];
-                this.buffer = '';
+        if (this.mode) {
+            if (this.logger) this.logger.info(`curr.size: ${this.curr.size}`);
+
+            this.queue = [];
+            this.buffer = '';
+
+            this.pos = this.curr.size;
+            if (this.curr.size > 0) {
+                this.queue.push({
+                    start: (this.curr.size > maxbytes) ? this.curr.size - maxbytes : 0,
+                    end: this.curr.size
+                });
+                if (this.queue.length === 1) return this.internalDispatcher.emit("next");
+            }
+            else this.last = '';
+        }
+        else {
+            if (this.logger) {
+                // this.logger.info(`prev: ${JSON.stringify(this.prev, null, 2)}`);
+                // this.logger.info(`curr: ${JSON.stringify(this.curr, null, 2)}`);
+                this.logger.info(`prev: ${JSON.stringify({
+                    "dev": this.prev.dev,
+                    "ino": this.prev.ino,
+                    "size": this.prev.size
+                }, null, 2)}`);
+                this.logger.info(`curr: ${JSON.stringify({
+                    "dev": this.curr.dev,
+                    "ino": this.curr.ino,
+                    "size": this.curr.size
+                }, null, 2)}`);
+                // this.logger.info(`prev.ino: ${this.prev.ino+""}`);
+                // this.logger.info(`curr.ino: ${this.curr.ino+""}`);
+            }
+
+            if (this.curr.size > this.prev.size) {
+                if ((this.queue.length === 0) && (this.buffer.length > 0) && !((this.prev.size - this.buffer.length) < 0)) {
+                    this.prev.size = this.prev.size - this.buffer.length;
+                    this.buffer = '';
+                }
 
                 this.pos = this.curr.size;
-                if (this.curr.size > 0) {
-                    this.queue.push({
-                        start: (this.curr.size > maxbytes) ? this.curr.size - maxbytes : 0,
-                        end: this.curr.size
-                    });
-                    if (this.queue.length === 1) return this.internalDispatcher.emit("next");
-                }
-                else this.last = '';
+                this.queue.push({
+                    start: ((this.curr.size - this.prev.size) > maxbytes) ? this.curr.size - maxbytes : this.prev.size,
+                    end: this.curr.size
+                });
+                if (this.queue.length === 1) return this.internalDispatcher.emit("next");
             }
             else {
-                if (this.logger) {
-                    // this.logger.info(`prev: ${JSON.stringify(this.prev, null, 2)}`);
-                    // this.logger.info(`curr: ${JSON.stringify(this.curr, null, 2)}`);
-                    this.logger.info(`prev: ${JSON.stringify({
-                        "dev": this.prev.dev,
-                        "ino": this.prev.ino,
-                        "size": this.prev.size
-                    }, null, 2)}`);
-                    this.logger.info(`curr: ${JSON.stringify({
-                        "dev": this.curr.dev,
-                        "ino": this.curr.ino,
-                        "size": this.curr.size
-                    }, null, 2)}`);
-                    // this.logger.info(`prev.ino: ${this.prev.ino+""}`);
-                    // this.logger.info(`curr.ino: ${this.curr.ino+""}`);
-                }
-
-                if (this.curr.size > this.prev.size) {
-                    if ((this.queue.length === 0) && (this.buffer.length > 0) && !((this.prev.size - this.buffer.length) < 0)) {
-                        this.prev.size = this.prev.size - this.buffer.length;
-                        this.buffer = '';
-                    }
-
+                if (this.curr.size < this.prev.size) {
                     this.pos = this.curr.size;
-                    this.queue.push({
-                        start: ((this.curr.size - this.prev.size) > maxbytes) ? this.curr.size - maxbytes : this.prev.size,
-                        end: this.curr.size
-                    });
-                    if (this.queue.length === 1) return this.internalDispatcher.emit("next");
+                    this.queue = [];
+                    this.buffer = '';
+                    this.emit("truncated");
                 }
                 else {
-                    if (this.curr.size < this.prev.size) {
-                        this.pos = this.curr.size;
-                        this.queue = [];
+                    if ((this.queue.length === 0) && (this.buffer.length > 0) && !((this.prev.size - this.buffer.length) < 0)) {
+                        this.prev.size = this.curr.size - this.buffer.length;
                         this.buffer = '';
-                        this.emit("truncated");
-                    }
-                    else {
-                        if ((this.queue.length === 0) && (this.buffer.length > 0) && !((this.prev.size - this.buffer.length) < 0)) {
-                            this.prev.size = this.curr.size - this.buffer.length;
-                            this.buffer = '';
 
-                            this.pos = this.curr.size;
-                            this.queue.push({
-                                start: this.prev.size,
-                                end: this.curr.size
-                            });
-                            if (this.queue.length === 1) return this.internalDispatcher.emit("next");
-                        }
+                        this.pos = this.curr.size;
+                        this.queue.push({
+                            start: this.prev.size,
+                            end: this.curr.size
+                        });
+                        if (this.queue.length === 1) return this.internalDispatcher.emit("next");
                     }
                 }
             }
-        // }
+        }
     }
 
     unwatch() {
