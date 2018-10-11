@@ -273,7 +273,7 @@ Tail = class Tail extends events.EventEmitter {
     if (this.logger) this.logger.info(`following file: ${this.filename}`);
 
     // return fs.watchFile(this.filename, this.fsWatchOptions, (curr, prev) => {
-    return this.watcher = watchfd.watch(this.filename, {  }, (curr, prev) => {
+    return this.watcher = watchfd.watch(this.filename, { "interval": 1000 }, (curr, prev) => {
       return this.watchFileEvent(curr, prev);
     });
   }
