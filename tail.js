@@ -155,19 +155,19 @@ Tail = class Tail extends events.EventEmitter {
 
         ({
             logger: this.logger,
-            fsWatchOptions: this.fsWatchOptions = {},
             encoding: this.encoding = "utf-8",
             separator: this.separator = /[\r]{0,1}\n/,
             fromBeginning = false,
             maxBytes: this.maxBytes = 0,
             flushAtEOF: this.flushAtEOF = false,
             mode: this.mode = "",
-            rememberLast: this.rememberLast = false
+            rememberLast: this.rememberLast = false,
+            interval: this.interval = 100
         } = options);
 
         if (this.logger) {
             this.logger.info(`<constructor>`);
-            this.logger.info(`fsWatchOptions: ${JSON.stringify(this.fsWatchOptions)}`);
+            this.logger.info(`interval: ${this.interval}`);
             this.logger.info(`filename: ${this.filename}`);
             this.logger.info(`encoding: ${this.encoding}`);
             if (this.separator) this.logger.info(`separator: ${this.separator.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '_')}`);
@@ -298,7 +298,7 @@ Tail = class Tail extends events.EventEmitter {
             awaitWriteFinish: {
                 // awaitWriteFinish.stabilityThreshold (default: 2000). Amount of time in milliseconds for a file size to remain constant before emitting its event.
                 // Количество времени в миллисекундах для того, чтобы размер файла оставался постоянным перед выпуском его события.
-                stabilityThreshold: 100,
+                stabilityThreshold: this.interval,
                 // awaitWriteFinish.pollInterval (default: 100). File size polling interval.
                 // Интервал опроса размера файла.
                 pollInterval: 100
@@ -331,7 +331,7 @@ Tail = class Tail extends events.EventEmitter {
         //     if (this.logger) this.logger.info(`'all' event: ${event}`);
         // });
         // this.watcher.on('raw', (event, path, details) => {
-        //     if (this.logger) this.logger.info(`'raw' event: ${event}; details: ${details}`);
+        //     if (this.logger) this.logger.info(`'raw' event: ${event}; details: ${JSON.stringify(details)}`);    // , null, 2
         // });
 
         this.watcher.on('unlink', (path) => {
