@@ -2,16 +2,16 @@
 // lucagrulla/node-tail
 // https://github.com/lucagrulla/node-tail
 
-var timer, Tail, environment, events, fs,
+var timer, Tail, environment, events, fs, watchfd,
   boundMethodCheck = function (instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new Error('Bound instance method accessed before binding');
     }
   };
-  
-events = require("events");
 
+events = require("events");
 fs = require('fs');
+watchfd = require('./watch.js');
 
 environment = process.env['NODE_ENV'] || 'development';
 
