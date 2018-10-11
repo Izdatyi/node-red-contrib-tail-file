@@ -2,7 +2,7 @@
 // lucagrulla/node-tail
 // https://github.com/lucagrulla/node-tail
 
-var timer, Tail, environment, events, fs, watchfd,
+var timer, Tail, environment, events, fs, 
   boundMethodCheck = function (instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new Error('Bound instance method accessed before binding');
@@ -11,7 +11,7 @@ var timer, Tail, environment, events, fs, watchfd,
 
 events = require("events");
 fs = require('fs');
-watchfd = require('./watch.js');
+var watchfd = require('./watch.js');
 
 environment = process.env['NODE_ENV'] || 'development';
 
@@ -185,6 +185,7 @@ Tail = class Tail extends events.EventEmitter {
     this.internalDispatcher = new events.EventEmitter();
     this.queue = [];
     this.isWatching = false;
+    this.watcher = null;
     this.internalDispatcher.on('next', () => {
       return this.readBlock();
     });
@@ -271,7 +272,8 @@ Tail = class Tail extends events.EventEmitter {
 
     if (this.logger) this.logger.info(`following file: ${this.filename}`);
 
-    return fs.watchFile(this.filename, this.fsWatchOptions, (curr, prev) => {
+    // return fs.watchFile(this.filename, this.fsWatchOptions, (curr, prev) => {
+    return this.watcher = watchfd.watch(this.filename, {  }, (curr, prev) => {
       return this.watchFileEvent(curr, prev);
     });
   }
@@ -381,7 +383,8 @@ Tail = class Tail extends events.EventEmitter {
   unwatch() {
     if (this.logger) this.logger.info(`<unwatch>`);
     if (timer) clearInterval(timer);
-    if (this.isWatching) fs.unwatchFile(this.filename);
+    // if (this.isWatching) fs.unwatchFile(this.filename);
+    if (this.isWatching && this.watcher) this.watcher.close();
     this.isWatching = false;
     this.queue = [];
     this.buffer = '';
