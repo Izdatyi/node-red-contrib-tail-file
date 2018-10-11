@@ -1,3 +1,6 @@
+// soldair/node-tailfd
+// https://github.com/soldair/node-tailfd
+
 var util = require('util'),
 events = require('events'),
 fs = require('fs');
