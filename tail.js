@@ -11,7 +11,6 @@ var timer, Tail, environment, events, fs,
 
 events = require("events");
 fs = require('fs');
-var chokidar = require('chokidar');
 
 environment = process.env['NODE_ENV'] || 'development';
 
@@ -270,92 +269,12 @@ Tail = class Tail extends events.EventEmitter {
 
         if (this.logger) this.logger.info(`following file: ${this.filename}`);
 
-        
-        this.watcher = chokidar.watch(this.filename, {
-            // persistent (default: true). Indicates whether the process should continue to run as long as files are being watched. If set to false when using fsevents to watch, no more events will be emitted after ready, even if the process continues to run.
-            persistent: true,
-
-            // ignoreInitial (default: false). If set to false then add/addDir events are also emitted for matching paths while instantiating the watching as chokidar discovers these file paths (before the ready event).
-            ignoreInitial: true,
-
-            // usePolling (default: false). Whether to use fs.watchFile (backed by polling), or fs.watch. If polling leads to high CPU utilization, consider setting this to false. It is typically necessary to set this to true to successfully watch files over a network, and it may be necessary to successfully watch files in other non-standard situations. Setting to true explicitly on OS X overrides the useFsEvents default.
-            // Windows: after rename - fired twice - bug?
-            usePolling: true,
-
-            // interval (default: 100). Interval of file system polling.
-            interval: 100,
-            // binaryInterval (default: 300). Interval of file system polling for binary files.
-            binaryInterval: 300,
-
-            // alwaysStat (default: false). If relying upon the fs.Stats object that may get passed with add, addDir, and change events, set this to true to ensure it is provided even in cases where it wasn't already available from the underlying watch events.
-            alwaysStat: true,
-
-            // awaitWriteFinish (default: false). By default, the add event will fire when a file first appears on disk, before the entire file has been written. Furthermore, in some cases some change events will be emitted while the file is being written. In some cases, especially when watching for large files there will be a need to wait for the write operation to finish before responding to a file creation or modification. Setting awaitWriteFinish to true (or a truthy value) will poll file size, holding its add and change events until the size does not change for a configurable amount of time. The appropriate duration setting is heavily dependent on the OS and hardware. For accurate detection this parameter should be relatively high, making file watching much less responsive. Use with caution.
-            // awaitWriteFinish: true,
-            awaitWriteFinish: {
-                // awaitWriteFinish.stabilityThreshold (default: 2000). Amount of time in milliseconds for a file size to remain constant before emitting its event.
-                // Количество времени в миллисекундах для того, чтобы размер файла оставался постоянным перед выпуском его события.
-                stabilityThreshold: 100,
-                // awaitWriteFinish.pollInterval (default: 100). File size polling interval.
-                // Интервал опроса размера файла.
-                pollInterval: 100
-            },
-
-            // ignorePermissionErrors (default: false). Indicates whether to watch files that don't have read permissions if possible. If watching fails due to EPERM or EACCES with this set to true, the errors will be suppressed silently.
-            ignorePermissionErrors: true,
-
-            // atomic (default: true if useFsEvents and usePolling are false). Automatically filters out artifacts that occur when using editors that use "atomic writes" instead of writing directly to the source file. If a file is re-added within 100 ms of being deleted, Chokidar emits a change event rather than unlink then add. If the default of 100 ms does not work well for you, you can override it by setting atomic to a custom value, in milliseconds.
-            atomic: true // or a custom 'atomicity delay', in milliseconds (default 100)
-        });
-        
-
-        this.watcher.on('change', (path, stats) => {
-            // if (this.logger) this.logger.info(`'change' stats.size: ${stats.size}`);
-            return this.watchFileEvent(stats);
-        });
-
-        this.watcher.on('unlink', (path) => {
-            if (this.logger) this.logger.info(`'unlink'`);
-        });
-
-        this.watcher.on('add', (path, stats) => {
-            if (this.logger) this.logger.info(`'add' stats: ${JSON.stringify(stats)}`);
-        });
-
-        // this.watcher.on('addDir', (path, stats) => {
-        //     if (this.logger) this.logger.info(`addDir' stats: ${JSON.stringify(stats)}`);
-        // });
-
-        // this.watcher.on('unlinkDir', (path) => {
-        //     if (this.logger) this.logger.info(`'unlinkDir'`);
-        // });
-
-        // this.watcher.on('all', (event, path) => {
-        //     if (this.logger) this.logger.info(`'all' event: ${event}`);
-        // });
-        
-        // this.watcher.on('raw', (event, path, details) => {
-        //     if (this.logger) this.logger.info(`'raw' event: ${event}; details: ${details}`);
-        // });
-
-        this.watcher.on('ready', () => {
-            if (this.logger) this.logger.info(`'ready'`);
-        });
-
-        this.watcher.on('error', (err) => {
-            if (this.logger) this.logger.error(`watch for ${this.filename} failed: ${err}`);
-            this.emit("error", `watch for ${this.filename} failed: ${err}`);
+        return fs.watchFile(this.filename, this.fsWatchOptions, (curr, prev) => {
+            return this.watchFileEvent(curr, prev);
         });
     }
 
-    // watchFileEvent(curr, prev) {
-    watchFileEvent(stats) {
-        if (this.logger) {
-            // this.logger.info(`stats: ${JSON.stringify(stats, null, 2)}`);
-            this.logger.info(`stats.size: ${stats.size}`);
-        }
-        this.emit("line", stats.size);
-        return;
+    watchFileEvent(curr, prev) {
 
         var formatDateTime = function (DT) {
             var value =
@@ -460,7 +379,7 @@ Tail = class Tail extends events.EventEmitter {
     unwatch() {
         if (this.logger) this.logger.info(`<unwatch>`);
         if (timer) clearInterval(timer);
-        if (this.isWatching && this.watcher) this.watcher.close();
+        if (this.isWatching) fs.unwatchFile(this.filename);
         this.isWatching = false;
         this.queue = [];
         this.buffer = '';
