@@ -185,7 +185,7 @@ Tail = class Tail extends events.EventEmitter {
     this.internalDispatcher = new events.EventEmitter();
     this.queue = [];
     this.isWatching = false;
-    this.watcher = null;
+    // this.watcher = null;
     this.internalDispatcher.on('next', () => {
       return this.readBlock();
     });
@@ -272,8 +272,8 @@ Tail = class Tail extends events.EventEmitter {
 
     if (this.logger) this.logger.info(`following file: ${this.filename}`);
 
-    // return fs.watchFile(this.filename, this.fsWatchOptions, (curr, prev) => {
-    return this.watcher = watchfd.watch(this.filename, { "interval": 1000 }, (curr, prev) => {
+    // return this.watcher = watchfd.watch(this.filename, { "interval": 1000 }, (curr, prev) => {
+    return fs.watchFile(this.filename, this.fsWatchOptions, (curr, prev) => {
       return this.watchFileEvent(curr, prev);
     });
   }
@@ -383,8 +383,8 @@ Tail = class Tail extends events.EventEmitter {
   unwatch() {
     if (this.logger) this.logger.info(`<unwatch>`);
     if (timer) clearInterval(timer);
-    // if (this.isWatching) fs.unwatchFile(this.filename);
-    if (this.isWatching && this.watcher) this.watcher.close();
+    if (this.isWatching) fs.unwatchFile(this.filename);
+    // if (this.isWatching && this.watcher) this.watcher.close();
     this.isWatching = false;
     this.queue = [];
     this.buffer = '';
