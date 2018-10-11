@@ -177,7 +177,9 @@ Tail = class Tail extends events.EventEmitter {
             if (this.mode) this.logger.info(`rememberLast: ${this.rememberLast}`);
         }
 
-        this.online = true;
+        // this.online = true;
+        this.prev = null;
+        this.curr = null;
         this.buffer = '';
         this.last = '';
         this.internalDispatcher = new events.EventEmitter();
@@ -251,6 +253,7 @@ Tail = class Tail extends events.EventEmitter {
 
         try {
             stats = fs.statSync(this.filename);
+            this.curr = stats;
         }
         catch (error1) {
             err = error1;
@@ -309,35 +312,6 @@ Tail = class Tail extends events.EventEmitter {
         });
         
 
-        this.watcher.on('change', (path, stats) => {
-            // if (this.logger) this.logger.info(`'change' stats.size: ${stats.size}`);
-            return this.watchFileEvent(stats);
-        });
-
-        this.watcher.on('unlink', (path) => {
-            if (this.logger) this.logger.info(`'unlink'`);
-        });
-
-        this.watcher.on('add', (path, stats) => {
-            if (this.logger) this.logger.info(`'add' stats: ${JSON.stringify(stats)}`);
-        });
-
-        // this.watcher.on('addDir', (path, stats) => {
-        //     if (this.logger) this.logger.info(`addDir' stats: ${JSON.stringify(stats)}`);
-        // });
-
-        // this.watcher.on('unlinkDir', (path) => {
-        //     if (this.logger) this.logger.info(`'unlinkDir'`);
-        // });
-
-        // this.watcher.on('all', (event, path) => {
-        //     if (this.logger) this.logger.info(`'all' event: ${event}`);
-        // });
-        
-        // this.watcher.on('raw', (event, path, details) => {
-        //     if (this.logger) this.logger.info(`'raw' event: ${event}; details: ${details}`);
-        // });
-
         this.watcher.on('ready', () => {
             if (this.logger) this.logger.info(`'ready'`);
         });
@@ -346,17 +320,41 @@ Tail = class Tail extends events.EventEmitter {
             if (this.logger) this.logger.error(`watch for ${this.filename} failed: ${err}`);
             this.emit("error", `watch for ${this.filename} failed: ${err}`);
         });
+
+        // this.watcher.on('addDir', (path, stats) => {
+        //     if (this.logger) this.logger.info(`addDir' stats: ${JSON.stringify(stats)}`);
+        // });
+        // this.watcher.on('unlinkDir', (path) => {
+        //     if (this.logger) this.logger.info(`'unlinkDir'`);
+        // });
+        // this.watcher.on('all', (event, path) => {
+        //     if (this.logger) this.logger.info(`'all' event: ${event}`);
+        // });
+        // this.watcher.on('raw', (event, path, details) => {
+        //     if (this.logger) this.logger.info(`'raw' event: ${event}; details: ${details}`);
+        // });
+
+        this.watcher.on('unlink', (path) => {
+            // if (this.logger) this.logger.info(`'unlink'`);
+            this.emit("disappears");
+        });
+
+        this.watcher.on('add', (path, stats) => {
+            // if (this.logger) this.logger.info(`'add' stats: ${JSON.stringify(stats)}`);
+            this.emit("reappears");
+            return this.watchFileEvent(stats);
+        });
+
+        this.watcher.on('change', (path, stats) => {
+            // if (this.logger) this.logger.info(`'change' tats: ${JSON.stringify(stats)}`);
+            return this.watchFileEvent(stats);
+        });
     }
 
-    // watchFileEvent(curr, prev) {
     watchFileEvent(stats) {
-        if (this.logger) {
-            // this.logger.info(`stats: ${JSON.stringify(stats, null, 2)}`);
-            this.logger.info(`stats.size: ${stats.size}`);
-        }
-        this.emit("line", stats.size);
-        return;
-
+        this.prev = this.curr || stats;
+        this.curr = stats;
+        
         var formatDateTime = function (DT) {
             var value =
                 ("0" + DT.getDate()).substr(-2) + "." +
@@ -365,7 +363,8 @@ Tail = class Tail extends events.EventEmitter {
                 DT.toLocaleString('ru-RU', { weekday: 'short' }) + " " +
                 ("0" + DT.getHours()).substr(-2) + ":" +
                 ("0" + DT.getMinutes()).substr(-2) + ":" +
-                ("0" + DT.getSeconds()).substr(-2);
+                ("0" + DT.getSeconds()).substr(-2) + '.' +
+                ("00" + DT.getMilliseconds()).substr(-3);
             return value;
         }
 
@@ -374,28 +373,28 @@ Tail = class Tail extends events.EventEmitter {
             if (this.mode) this.logger.info(`mode: ${this.mode}`);
         }
 
-        if (curr.ino > 0) {
-            if (!this.online) this.emit("reappears");
-        }
-        else if (this.online) this.emit("disappears");
-        this.online = (curr.ino > 0);
+        // if (curr.ino > 0) {
+        //     if (!this.online) this.emit("reappears");
+        // }
+        // else if (this.online) this.emit("disappears");
+        // this.online = (curr.ino > 0);
 
 
-        var maxbytes = this.maxBytes || curr.size;
+        var maxbytes = this.maxBytes || this.curr.size;
         if (this.logger) this.logger.info(`maxbytes: ${maxbytes}`);
 
-        if (curr.ino > 0) {
+        // if (curr.ino > 0) {
             if (this.mode) {
-                if (this.logger) this.logger.info(`curr.size: ${curr.size}`);
+                if (this.logger) this.logger.info(`curr.size: ${this.curr.size}`);
 
                 this.queue = [];
                 this.buffer = '';
 
-                this.pos = curr.size;
-                if (curr.size > 0) {
+                this.pos = this.curr.size;
+                if (this.curr.size > 0) {
                     this.queue.push({
-                        start: (curr.size > maxbytes) ? curr.size - maxbytes : 0,
-                        end: curr.size
+                        start: (this.curr.size > maxbytes) ? this.curr.size - maxbytes : 0,
+                        end: this.curr.size
                     });
                     if (this.queue.length === 1) return this.internalDispatcher.emit("next");
                 }
@@ -403,58 +402,58 @@ Tail = class Tail extends events.EventEmitter {
             }
             else {
                 if (this.logger) {
-                    // this.logger.info(`prev: ${JSON.stringify(prev, null, 2)}`);
-                    // this.logger.info(`curr: ${JSON.stringify(curr, null, 2)}`);
+                    // this.logger.info(`prev: ${JSON.stringify(this.prev, null, 2)}`);
+                    // this.logger.info(`curr: ${JSON.stringify(this.curr, null, 2)}`);
                     this.logger.info(`prev: ${JSON.stringify({
-                        "dev": prev.dev,
-                        "ino": prev.ino,
-                        "size": prev.size
+                        "dev": this.prev.dev,
+                        "ino": this.prev.ino,
+                        "size": this.prev.size
                     }, null, 2)}`);
                     this.logger.info(`curr: ${JSON.stringify({
-                        "dev": curr.dev,
-                        "ino": curr.ino,
-                        "size": curr.size
+                        "dev": this.curr.dev,
+                        "ino": this.curr.ino,
+                        "size": this.curr.size
                     }, null, 2)}`);
-                    // this.logger.info(`prev.ino: ${prev.ino+""}`);
-                    // this.logger.info(`curr.ino: ${curr.ino+""}`);
+                    // this.logger.info(`prev.ino: ${this.prev.ino+""}`);
+                    // this.logger.info(`curr.ino: ${this.curr.ino+""}`);
                 }
 
-                if (curr.size > prev.size) {
-                    if ((this.queue.length === 0) && (this.buffer.length > 0) && !((prev.size - this.buffer.length) < 0)) {
-                        prev.size = prev.size - this.buffer.length;
+                if (this.curr.size > this.prev.size) {
+                    if ((this.queue.length === 0) && (this.buffer.length > 0) && !((this.prev.size - this.buffer.length) < 0)) {
+                        this.prev.size = this.prev.size - this.buffer.length;
                         this.buffer = '';
                     }
 
-                    this.pos = curr.size;
+                    this.pos = this.curr.size;
                     this.queue.push({
-                        start: ((curr.size - prev.size) > maxbytes) ? curr.size - maxbytes : prev.size,
-                        end: curr.size
+                        start: ((this.curr.size - this.prev.size) > maxbytes) ? this.curr.size - maxbytes : this.prev.size,
+                        end: this.curr.size
                     });
                     if (this.queue.length === 1) return this.internalDispatcher.emit("next");
                 }
                 else {
-                    if (curr.size < prev.size) {
-                        this.pos = curr.size;
+                    if (this.curr.size < this.prev.size) {
+                        this.pos = this.curr.size;
                         this.queue = [];
                         this.buffer = '';
                         this.emit("truncated");
                     }
                     else {
-                        if ((this.queue.length === 0) && (this.buffer.length > 0) && !((prev.size - this.buffer.length) < 0)) {
-                            prev.size = curr.size - this.buffer.length;
+                        if ((this.queue.length === 0) && (this.buffer.length > 0) && !((this.prev.size - this.buffer.length) < 0)) {
+                            this.prev.size = this.curr.size - this.buffer.length;
                             this.buffer = '';
 
-                            this.pos = curr.size;
+                            this.pos = this.curr.size;
                             this.queue.push({
-                                start: prev.size,
-                                end: curr.size
+                                start: this.prev.size,
+                                end: this.curr.size
                             });
                             if (this.queue.length === 1) return this.internalDispatcher.emit("next");
                         }
                     }
                 }
             }
-        }
+        // }
     }
 
     unwatch() {
