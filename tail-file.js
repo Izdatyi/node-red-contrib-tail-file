@@ -1,7 +1,7 @@
 
 module.exports = function(RED) {
     "use strict";
-    var Tail = require('./tail.js').Tail;
+    var Tail = require('./tail').Tail;
     var fs = require('fs');
     var platform = require('os').platform();
 
@@ -53,17 +53,14 @@ module.exports = function(RED) {
 
             var options = {
                 logger: config.echo ? console : null,
-                fsWatchOptions: {
-                    persistent: true,
-                    interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 100)
-                },
                 encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8"),
                 separator: (node.split ? RegExp(((node.separator.trim() !== "") ? node.separator.trim() : "[\r]{0,1}\n"), "gi") : ""),
                 fromBeginning: node.fromBeginning,
                 maxBytes: (node.bytes ? ((parseInt(node.maxBytes) > 0) ? parseInt(node.maxBytes) : 5120) : 0),
                 mode: node.mode,
                 flushAtEOF: node.flushAtEOF,
-                rememberLast: (node.mode ? node.rememberLast : false)
+                rememberLast: (node.mode ? node.rememberLast : false),
+                interval: (parseInt(node.interval) > 0 ? parseInt(node.interval) : 100)
             };
             if (echo) node.warn(options);
 
