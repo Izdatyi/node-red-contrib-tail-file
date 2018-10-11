@@ -401,7 +401,6 @@ Tail = class Tail extends events.EventEmitter {
                 }
             }
         }
-
     }
 
     unwatch() {
