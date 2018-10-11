@@ -62,40 +62,41 @@ Tail = class Tail extends events.EventEmitter {
                     if (this.queue.length > 0) this.internalDispatcher.emit("next");
 
                     if (this.mode) {
-                        if (this.rememberLast) {
-                            if (this.logger) this.logger.info(`buffer: (${this.buffer.length})`);
-
-                            if ((this.last.length > 0) && (this.buffer.length >= this.last.length)) {
-                                pos = this.buffer.indexOf(this.last);
-                                if (pos !== -1) pos = pos + this.last.length;
-                            }
-
-                            if (!(pos >= 0)) {
-                                if (this.logger) {
-                                    this.logger.info(``);
-                                    this.logger.info(`last: (${this.last.length})`);
-                                    this.logger.info(`${this.last.toString().trim()}`);
-                                    this.logger.info(``);
-                                    this.logger.info(`buffer: (${this.buffer.length})`);
-                                    this.logger.info(`${this.buffer.toString().trim()}`);
-                                    this.logger.info(``);
-                                }
-                                this.emit('notfound', this.last, this.buffer);
-                            }
-
-                            // this.last = this.buffer.slice(-parseInt(((this.buffer.length * 10 / 100) > 1024) ? 1024 : (this.buffer.length * 10 / 100)));
-                            this.last = this.buffer.slice(-512);
-
-                            if (pos >= 0) {
-                                if (this.logger) this.logger.info(`pos: ${pos}`);
-                                this.buffer = this.buffer.slice(pos);
-                            }
-                            else this.buffer = '';
-
-                            if (this.logger) this.logger.info(`new last: (${this.last.length}) '...${this.last.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').substr(-70)}'`);
-                        }
-
                         if (this.buffer.length > 0) {
+                            if (this.rememberLast) {
+                                if (this.logger) this.logger.info(`buffer: (${this.buffer.length})`);
+
+                                if ((this.last.length > 0) && (this.buffer.length >= this.last.length)) {
+                                    pos = this.buffer.indexOf(this.last);
+                                    if (pos !== -1) pos = pos + this.last.length;
+                                }
+
+                                if (!(pos >= 0)) {
+                                    if (this.logger) {
+                                        this.logger.info(``);
+                                        this.logger.info(`last: (${this.last.length})`);
+                                        this.logger.info(`${this.last.toString().trim()}`);
+                                        this.logger.info(``);
+                                        this.logger.info(`buffer: (${this.buffer.length})`);
+                                        this.logger.info(`${this.buffer.toString().trim()}`);
+                                        this.logger.info(``);
+                                    }
+                                    this.emit('notfound', this.last, this.buffer);
+                                }
+
+                                // this.last = this.buffer.slice(-parseInt(((this.buffer.length * 10 / 100) > 1024) ? 1024 : (this.buffer.length * 10 / 100)));
+                                this.last = this.buffer.slice(-512);
+
+                                if (pos >= 0) {
+                                    if (this.logger) this.logger.info(`pos: ${pos}`);
+                                    this.buffer = this.buffer.slice(pos);
+                                }
+                                else this.buffer = '';
+
+                                if (this.logger) this.logger.info(`new last: (${this.last.length}) '...${this.last.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').substr(-70)}'`);
+                            }
+
+                        
                             if (this.logger) this.logger.info(`buffer line: (${this.buffer.length})`);
                             if (!this.separator) {
                                 this.emit("line", this.buffer);
@@ -119,7 +120,7 @@ Tail = class Tail extends events.EventEmitter {
                 });
 
 
-                return stream.on('data', (data) => {
+                stream.on('data', (data) => {
                     if (this.logger) {
                         this.logger.info(`<data>`);
                         if (!this.mode && this.separator) this.logger.info(`separator: ${this.separator.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '_')}`);
