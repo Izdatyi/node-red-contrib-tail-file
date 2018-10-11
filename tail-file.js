@@ -1,7 +1,7 @@
 
 module.exports = function(RED) {
     "use strict";
-    var Tail = require('./tail.js').Tail;
+    var Tail = require('./tail').Tail;
     var fs = require('fs');
     var platform = require('os').platform();
 
