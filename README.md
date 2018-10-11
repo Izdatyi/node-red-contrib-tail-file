@@ -5,5 +5,5 @@ Node-RED Node: Tail **beta**
 cd c:\Users\<USER>\.node-red\
 npm install node-red-contrib-tail-file
 ```
-## Credits
-Dependencies: paulmillr/chokidar (https://github.com/paulmillr/chokidar)
+## Dependencies
+paulmillr/chokidar (https://github.com/paulmillr/chokidar)
