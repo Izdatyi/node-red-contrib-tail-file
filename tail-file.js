@@ -1,6 +1,6 @@
 
 module.exports = function(RED) {
-    "use strict";
+    'use strict';
     var Tail = require('./tail').Tail;
     var fs = require('fs');
     var platform = require('os').platform();
@@ -21,8 +21,8 @@ module.exports = function(RED) {
         this.maxBytes = config.maxBytes || 0;
         this.skipBlank = config.skipBlank || false;
         this.useTrim = config.useTrim || false;
-        this.interval = config.interval || 0;
         this.sendError = config.sendError || false;
+        this.interval = config.interval || 0;
         var node = this;
         var tail;
         var message = {};

@@ -2,23 +2,24 @@
 // lucagrulla/node-tail
 // https://github.com/lucagrulla/node-tail
 
-var timer, Tail, environment, events, fs,
+'use strict';
+var Tail, environment, events, fs, chokidar,
     boundMethodCheck = function (instance, Constructor) {
         if (!(instance instanceof Constructor)) {
             throw new Error('Bound instance method accessed before binding');
         }
     };
 
-events = require("events");
+events = require('events');
 fs = require('fs');
-var chokidar = require('chokidar');
+chokidar = require('chokidar');
 
 environment = process.env['NODE_ENV'] || 'development';
 
 Tail = class Tail extends events.EventEmitter {
 
     readBlock() {
-        if (this.logger) this.logger.info(`<readBlock>`);
+        if (this.logger) this.logger.info(`<readBlock> filename: ${this.filename}`);
         var block, stream;
 
         boundMethodCheck(this, Tail);
@@ -153,6 +154,7 @@ Tail = class Tail extends events.EventEmitter {
         this.readBlock = this.readBlock.bind(this);
         this.change = this.change.bind(this);
         this.filename = filename;
+        this.timer = undefined;
 
         ({
             logger: this.logger,
@@ -197,21 +199,21 @@ Tail = class Tail extends events.EventEmitter {
     }
 
     start(fromBeginning) {
-        if (this.logger) this.logger.info("<start>");
+        if (this.logger) this.logger.info(`<start> filename: ${this.filename}`);
         var interval = 0;
         var timing = function () {
-            timer = setInterval(function () {
-                // if (this.logger) this.logger.info(`tick... interval: ${interval}`);
+            this.timer = setInterval(function () {
+                // if (this.logger) this.logger.info(`tick... interval: ${interval}; filename: ${this.filename}`);
                 if (!this.filename || !fs.existsSync(this.filename)) {
                     if (interval == 0) {
                         this.emit("noent");
                         interval = 1000;
-                        clearInterval(timer);
+                        clearInterval(this.timer);
                         timing();
                     }
                     return;
                 }
-                clearInterval(timer);
+                clearInterval(this.timer);
                 if (interval !== 0) this.emit("reappears");
 
                 this.watch(fromBeginning);
@@ -222,7 +224,7 @@ Tail = class Tail extends events.EventEmitter {
     }
 
     change(filename) {
-        if (this.logger) this.logger.info(`<change>`);
+        if (this.logger) this.logger.info(`<change> filename: ${this.filename}`);
         var err, stats;
         boundMethodCheck(this, Tail);
         try {
@@ -247,7 +249,7 @@ Tail = class Tail extends events.EventEmitter {
     }
 
     watch(fromBeginning) {
-        if (this.logger) this.logger.info("<watch>");
+        if (this.logger) this.logger.info(`<watch> filename: ${this.filename}; isWatching : ${this.isWatching}`);
         var err, stats;
 
         if (this.isWatching) return;
@@ -452,8 +454,8 @@ Tail = class Tail extends events.EventEmitter {
     }
 
     unwatch() {
-        if (this.logger) this.logger.info(`<unwatch>`);
-        if (timer) clearInterval(timer);
+        if (this.logger) this.logger.info(`<unwatch> filename: ${this.filename}`);
+        if (this.timer) clearInterval(this.timer);
         if (this.isWatching && this.watcher) this.watcher.close();
         this.isWatching = false;
         this.queue = [];
