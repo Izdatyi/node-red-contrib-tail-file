@@ -62,39 +62,40 @@ Tail = class Tail extends events.EventEmitter {
                     if (this.queue.length > 0) this.internalDispatcher.emit("next");
 
                     if (this.mode) {
-                        if (this.rememberLast) {
-                            if (this.logger) this.logger.info(`buffer: (${this.buffer.length})`);
-
-                            if ((this.last.length > 0) && (this.buffer.length >= this.last.length)) {
-                                pos = this.buffer.indexOf(this.last);
-                                if (pos !== -1) pos = pos + this.last.length;
-                            }
-
-                            if (!(pos >= 0)) {
-                                if (this.logger) {
-                                    this.logger.info(``);
-                                    this.logger.info(`last: (${this.last.length})`);
-                                    this.logger.info(`${this.last.toString().trim()}`);
-                                    this.logger.info(``);
-                                    this.logger.info(`buffer: (${this.buffer.length})`);
-                                    this.logger.info(`${this.buffer.toString().trim()}`);
-                                    this.logger.info(``);
-                                }
-                                this.emit('notfound', this.last, this.buffer);
-                            }
-
-                            this.last = this.buffer.slice(-512);
-
-                            if (pos >= 0) {
-                                if (this.logger) this.logger.info(`pos: ${pos}`);
-                                this.buffer = this.buffer.slice(pos);
-                            }
-                            else this.buffer = '';
-
-                            if (this.logger) this.logger.info(`new last: (${this.last.length}) '...${this.last.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').substr(-70)}'`);
-                        }
-
                         if (this.buffer.length > 0) {
+                            if (this.rememberLast) {
+                                if (this.logger) this.logger.info(`buffer: (${this.buffer.length})`);
+
+                                if ((this.last.length > 0) && (this.buffer.length >= this.last.length)) {
+                                    pos = this.buffer.indexOf(this.last);
+                                    if (pos !== -1) pos = pos + this.last.length;
+                                }
+
+                                if (!(pos >= 0)) {
+                                    if (this.logger) {
+                                        this.logger.info(``);
+                                        this.logger.info(`last: (${this.last.length})`);
+                                        this.logger.info(`${this.last.toString().trim()}`);
+                                        this.logger.info(``);
+                                        this.logger.info(`buffer: (${this.buffer.length})`);
+                                        this.logger.info(`${this.buffer.toString().trim()}`);
+                                        this.logger.info(``);
+                                    }
+                                    this.emit('notfound', this.last, this.buffer);
+                                }
+
+                                this.last = this.buffer.slice(-512);
+
+                                if (pos >= 0) {
+                                    if (this.logger) this.logger.info(`pos: ${pos}`);
+                                    this.buffer = this.buffer.slice(pos);
+                                }
+                                else this.buffer = '';
+
+                                if (this.logger) this.logger.info(`new last: (${this.last.length}) '...${this.last.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').substr(-70)}'`);
+                            }
+
+                        
                             if (this.logger) this.logger.info(`buffer line: (${this.buffer.length})`);
                             if (!this.separator) {
                                 this.emit("line", this.buffer);
@@ -118,7 +119,7 @@ Tail = class Tail extends events.EventEmitter {
                 });
 
 
-                return stream.on('data', (data) => {
+                stream.on('data', (data) => {
                     if (this.logger) {
                         this.logger.info(`<data>`);
                         if (!this.mode && this.separator) this.logger.info(`separator: ${this.separator.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '_')}`);
@@ -154,6 +155,8 @@ Tail = class Tail extends events.EventEmitter {
 
         ({
             logger: this.logger,
+            platform: this.platform = null,
+            options: this.options = {}, 
             encoding: this.encoding = "utf-8",
             separator: this.separator = /[\r]{0,1}\n/,
             fromBeginning = false,
@@ -161,12 +164,13 @@ Tail = class Tail extends events.EventEmitter {
             flushAtEOF: this.flushAtEOF = false,
             mode: this.mode = "",
             rememberLast: this.rememberLast = false,
-            interval: this.interval = 100
         } = options);
 
         if (this.logger) {
             this.logger.info(`<constructor>`);
-            this.logger.info(`interval: ${this.interval}`);
+            this.logger.info(`platform: ${this.platform}`);
+            this.logger.info(`options: ${JSON.stringify(this.options)}`);
+            this.logger.info(`interval: ${this.options.interval}`);
             this.logger.info(`filename: ${this.filename}`);
             this.logger.info(`encoding: ${this.encoding}`);
             if (this.separator) this.logger.info(`separator: ${this.separator.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '_')}`);
@@ -279,7 +283,7 @@ Tail = class Tail extends events.EventEmitter {
             binaryInterval: 300,
             alwaysStat: true,
             awaitWriteFinish: {
-                stabilityThreshold: this.interval,
+                stabilityThreshold: this.options.interval,
                 pollInterval: 100
             },
             ignorePermissionErrors: true,
