@@ -80,13 +80,13 @@
 
     <div class="form-row">
         <label>&nbsp;</label>
-        <input type="checkbox" id="node-input-errors" style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-errors" style="width: 70%;"><span>Allow error messages</span></label>
+        <input type="checkbox" id="node-input-sendError" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-sendError" style="width: 70%;"><span>Send message on error (legacy mode)</span></label>
     </div>
 
     <div class="form-row">
         <label for="node-input-interval"><i class="fa fa-refresh"></i> Interval</label>
-        <input type="number" min="1" id="node-input-interval" placeholder="100" style="width: 70px;">
+        <input type="number" min="1" id="node-input-interval" placeholder="200" style="width: 70px;">
         &nbsp;<span>milliseconds</span>
     </div>
 
@@ -99,8 +99,8 @@
 
     <div class="form-row" id="node-tail-file-debug">
         <label>&nbsp;</label>
-        <input type="checkbox" id="node-input-echo" style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-echo" style="width: 70%;"><span>echo</span></label>
+        <input type="checkbox" id="node-input-debug" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-debug" style="width: 70%;"><span>debug</span></label>
     </div>
 </script>
 
@@ -113,7 +113,7 @@
     RED.nodes.registerType('tail-file', {
         category: 'storage-input',
         defaults: {
-            echo: { value: true },
+            debug: { value: true },
             filename: { value: "e:/www.txt" },    // e:/www.txt
             createFile: { value: false },
             encoding: { value: "utf-8" },
@@ -127,11 +127,12 @@
             maxBytes: { value: "" },
             skipBlank: { value: true },
             useTrim: { value: true },
-            errors: { value: true },
+            sendError: { value: false },
             interval: { value: "" },
             name: { value: "" }
         },
         color: "burlywood",
+        inputLabels: "parameters for input",
         inputs: 1,
         outputs: 1,
         icon: "file.png",

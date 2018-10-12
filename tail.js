@@ -156,6 +156,8 @@ Tail = class Tail extends events.EventEmitter {
 
         ({
             logger: this.logger,
+            platform: this.platform = null,
+            options: this.options = {}, 
             encoding: this.encoding = "utf-8",
             separator: this.separator = /[\r]{0,1}\n/,
             fromBeginning = false,
@@ -163,12 +165,14 @@ Tail = class Tail extends events.EventEmitter {
             flushAtEOF: this.flushAtEOF = false,
             mode: this.mode = "",
             rememberLast: this.rememberLast = false,
-            interval: this.interval = 100
+            interval: this.interval = 200
         } = options);
 
         if (this.logger) {
             this.logger.info(`<constructor>`);
-            this.logger.info(`interval: ${this.interval}`);
+            this.logger.info(`platform: ${this.platform}`);
+            this.logger.info(`options: ${JSON.stringify(this.options)}`);
+            this.logger.info(`interval: ${this.options.interval}`);
             this.logger.info(`filename: ${this.filename}`);
             this.logger.info(`encoding: ${this.encoding}`);
             if (this.separator) this.logger.info(`separator: ${this.separator.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '_')}`);
@@ -299,7 +303,7 @@ Tail = class Tail extends events.EventEmitter {
             awaitWriteFinish: {
                 // awaitWriteFinish.stabilityThreshold (default: 2000). Amount of time in milliseconds for a file size to remain constant before emitting its event.
                 // Количество времени в миллисекундах для того, чтобы размер файла оставался постоянным перед выпуском его события.
-                stabilityThreshold: this.interval,
+                stabilityThreshold: this.options.interval,
                 // awaitWriteFinish.pollInterval (default: 100). File size polling interval.
                 // Интервал опроса размера файла.
                 pollInterval: 100
