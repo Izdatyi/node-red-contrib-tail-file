@@ -165,7 +165,6 @@ Tail = class Tail extends events.EventEmitter {
             flushAtEOF: this.flushAtEOF = false,
             mode: this.mode = "",
             rememberLast: this.rememberLast = false,
-            interval: this.interval = 200
         } = options);
 
         if (this.logger) {
@@ -182,7 +181,6 @@ Tail = class Tail extends events.EventEmitter {
             if (this.mode) this.logger.info(`rememberLast: ${this.rememberLast}`);
         }
 
-        // this.online = true;
         this.prev = null;
         this.curr = null;
         this.buffer = '';
