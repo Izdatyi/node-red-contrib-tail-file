@@ -8,6 +8,8 @@
     "node-red",
     "tail",
     "tail-file",
+    "file",
+    "logs",
     "windows"
   ],
   "node-red": {
