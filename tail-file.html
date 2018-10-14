@@ -57,12 +57,12 @@
         <label for="node-input-rememberLast" style="width: 70%;"><span>Try to remember the last entry</span></label>
     </div>
 
-    <div class="form-row" id="node-tail-file-maxBytes">
+    <div class="form-row">
         <label>&nbsp;</label>
-        <input type="checkbox" id="node-input-bytes" style="display: inline-block; width: auto; margin: auto;">
-        <label for="node-input-bytes" style="width: auto;"><span style="vertical-align: middle;">Maximum in one read:&nbsp;</span></label>
+        <input type="checkbox" id="node-input-limitSize" style="display: inline-block; width: auto; margin: auto;">
+        <label for="node-input-limitSize" style="width: auto;"><span style="vertical-align: middle;">Maximum in one read:&nbsp;</span></label>
         <input type="number" min="1" id="node-input-maxBytes" placeholder="5120" style="width: 70px; height: 28px;">
-        <label for="node-input-bytes" style="width: auto;"><span style="vertical-align: middle;">&nbsp;bytes</span></label>
+        <label for="node-input-limitSize" style="width: auto;"><span style="vertical-align: middle;">&nbsp;bytes</span></label>
     </div>
 
     <div class="form-row">
@@ -123,7 +123,7 @@
             fromBeginning: { value: false },
             flushAtEOF: { value: false },
             rememberLast: { value: true },
-            bytes: { value: true },
+            limitSize: { value: true },
             maxBytes: { value: "" },
             skipBlank: { value: true },
             useTrim: { value: true },
@@ -150,13 +150,15 @@
                 if (this.value === "") {
                     $("#node-tail-file-flush").show();
                     $("#node-tail-file-remember").hide();
+                    $('#node-input-interval').attr('placeholder', '100');
                 } else {
                     $("#node-tail-file-flush").hide();
                     $("#node-tail-file-remember").show();
+                    $('#node-input-interval').attr('placeholder', '200');
                 }
             });
-            $("#node-input-bytes").change(function () {
-                $("#node-input-maxBytes").attr('disabled', !$("#node-input-bytes").prop('checked'));
+            $("#node-input-limitSize").change(function () {
+                $("#node-input-maxBytes").attr('disabled', !$("#node-input-limitSize").prop('checked'));
             })
             $("#node-input-skipBlank").on("change", function () {
                 if (this.checked === true) {

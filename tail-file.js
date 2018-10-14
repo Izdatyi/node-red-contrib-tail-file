@@ -17,7 +17,8 @@ module.exports = function(RED) {
         this.fromBeginning = config.fromBeginning || false;
         this.flushAtEOF = config.flushAtEOF || false;
         this.rememberLast = config.rememberLast || false;
-        this.bytes = config.bytes || false;
+        this.lineBytes = config.lineBytes || 512;
+        this.limitSize = config.limitSize || false;
         this.maxBytes = config.maxBytes || 0;
         this.skipBlank = config.skipBlank || false;
         this.useTrim = config.useTrim || false;
@@ -58,10 +59,11 @@ module.exports = function(RED) {
                 encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8"),
                 separator: (node.split ? RegExp(((node.separator.trim() !== "") ? node.separator.trim() : "[\r]{0,1}\n"), "gi") : ""),
                 fromBeginning: node.fromBeginning,
-                maxBytes: (node.bytes ? ((parseInt(node.maxBytes) > 0) ? parseInt(node.maxBytes) : 5120) : 0),
+                maxBytes: (node.limitSize ? ((parseInt(node.maxBytes) > 0) ? parseInt(node.maxBytes) : 5120) : 0),
                 mode: node.mode,
                 flushAtEOF: node.flushAtEOF,
-                rememberLast: (node.mode ? node.rememberLast : false)
+                rememberLast: (node.mode ? node.rememberLast : false),
+                lineBytes: node.lineBytes
             };
             if (debug) node.warn(options);
 

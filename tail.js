@@ -86,7 +86,7 @@ Tail = class Tail extends events.EventEmitter {
                                 }
 
                                 // this.last = this.buffer.slice(-parseInt(((this.buffer.length * 10 / 100) > 1024) ? 1024 : (this.buffer.length * 10 / 100)));
-                                this.last = this.buffer.slice(-512);
+                                this.last = this.buffer.slice(-this.lineBytes);
 
                                 if (pos >= 0) {
                                     if (this.logger) this.logger.info(`pos: ${pos}`);
@@ -167,6 +167,7 @@ Tail = class Tail extends events.EventEmitter {
             flushAtEOF: this.flushAtEOF = false,
             mode: this.mode = "",
             rememberLast: this.rememberLast = false,
+            lineBytes: this.lineBytes = 512,
         } = options);
 
         if (this.logger) {
@@ -181,6 +182,7 @@ Tail = class Tail extends events.EventEmitter {
             if (!this.mode) this.logger.info(`flushAtEOF: ${this.flushAtEOF}`);
             if (this.mode) this.logger.info(`mode: ${this.mode}`);
             if (this.mode) this.logger.info(`rememberLast: ${this.rememberLast}`);
+            if (this.mode) this.logger.info(`lineBytes: ${this.lineBytes}`);
         }
 
         this.prev = null;
