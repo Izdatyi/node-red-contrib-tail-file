@@ -224,7 +224,7 @@ module.exports = function(RED) {
                         node.createFile = ((("createFile" in msg.payload) && (Object.prototype.toString.call(msg.payload.createFile).toLowerCase() == "[object Boolean]".toLowerCase())) ? msg.payload.createFile : configDef.createFile);
 
                         if ("encoding" in msg.payload) {
-                            var encoding = msg.payload.filename.toLowerCase().trim();
+                            var encoding = msg.payload.encoding.toLowerCase().trim();
                             if (
                                 (encoding == "utf8") || (encoding == "utf-8") ||
                                 (encoding == "ucs2") || (encoding == "ucs-2") ||
@@ -267,9 +267,6 @@ module.exports = function(RED) {
                         node.sendError = ((("sendError" in msg.payload) && (Object.prototype.toString.call(msg.payload.sendError).toLowerCase() == "[object Boolean]".toLowerCase())) ? msg.payload.sendError : configDef.sendError);
 
                         node.interval = (("interval" in msg.payload) ? msg.payload.interval.toString().trim() : configDef.interval);
-
-
-
                         
                         
                         if (("chokidar" in msg.payload) && (Object.prototype.toString.call(msg.payload.chokidar).toLowerCase() === "[object Object]".toLowerCase())) {
