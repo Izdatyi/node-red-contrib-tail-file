@@ -44,7 +44,7 @@ module.exports = function(RED) {
             binaryInterval: 300,
             alwaysStat: true,
             awaitWriteFinish: {
-                stabilityThreshold: (parseInt(node.interval) > 0 ? parseInt(node.interval) : (node.mode ? 200 : 100)),
+                // stabilityThreshold: (parseInt(node.interval) > 0 ? parseInt(node.interval) : (node.mode ? 200 : 100)),
                 pollInterval: 100
             },
             ignorePermissionErrors: true,
@@ -73,7 +73,7 @@ module.exports = function(RED) {
             }
 
             try {
-                const options = {
+                var options = {
                     logger: logger,
                     platform: platform,
                     encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8"),
@@ -86,6 +86,9 @@ module.exports = function(RED) {
                     lineBytes: ((parseInt(node.lineBytes) > 0) ? parseInt(node.lineBytes) : 512),
                     chokidar: (node.chokidar ? node.chokidar : chokidarDef)
                 };
+                if (!node.chokidar) {
+                    options.chokidar.awaitWriteFinish.stabilityThreshold = (parseInt(node.interval) > 0 ? parseInt(node.interval) : (node.mode ? 200 : 100))
+                }
                 if (debug) node.warn(options);
                 // if (debug) node.warn(`${JSON.stringify(options, null, 2)}`);
 
@@ -248,6 +251,12 @@ module.exports = function(RED) {
 
                         node.separator = (("separator" in msg.payload) ? msg.payload.separator.toString() : configDef.separator);
 
+                        if (("separator" in msg.payload) && !(("split" in msg.payload) && (Object.prototype.toString.call(msg.payload.split).toLowerCase() == "[object Boolean]".toLowerCase())))
+                        {
+                            // if (debug) node.warn(`enable split`);
+                            node.split = true;
+                        }
+
                         node.fromBeginning = ((("fromBeginning" in msg.payload) && (Object.prototype.toString.call(msg.payload.fromBeginning).toLowerCase() == "[object Boolean]".toLowerCase())) ? msg.payload.fromBeginning : configDef.fromBeginning);
 
                         node.flushAtEOF = ((("flushAtEOF" in msg.payload) && (Object.prototype.toString.call(msg.payload.flushAtEOF).toLowerCase() == "[object Boolean]".toLowerCase())) ? msg.payload.flushAtEOF : configDef.flushAtEOF);
@@ -260,14 +269,26 @@ module.exports = function(RED) {
 
                         node.maxBytes = (("maxBytes" in msg.payload) ? msg.payload.maxBytes.toString().trim() : configDef.maxBytes);
 
+                        if (("maxBytes" in msg.payload) && !(("limitSize" in msg.payload) && (Object.prototype.toString.call(msg.payload.limitSize).toLowerCase() == "[object Boolean]".toLowerCase())))
+                        {
+                            // if (debug) node.warn(`enable limitSize`);
+                            node.limitSize = true;
+                        }
+
                         node.skipBlank = ((("skipBlank" in msg.payload) && (Object.prototype.toString.call(msg.payload.skipBlank).toLowerCase() == "[object Boolean]".toLowerCase())) ? msg.payload.skipBlank : configDef.skipBlank);
 
                         node.useTrim = ((("useTrim" in msg.payload) && (Object.prototype.toString.call(msg.payload.useTrim).toLowerCase() == "[object Boolean]".toLowerCase())) ? msg.payload.useTrim : configDef.useTrim);
 
+                        if ((("useTrim" in msg.payload) && (Object.prototype.toString.call(msg.payload.useTrim).toLowerCase() == "[object Boolean]".toLowerCase())) && !(("skipBlank" in msg.payload) && (Object.prototype.toString.call(msg.payload.skipBlank).toLowerCase() == "[object Boolean]".toLowerCase())))
+                        {
+                            // if (debug) node.warn(`enable skipBlank`);
+                            node.skipBlank = true;
+                        }
+
                         node.sendError = ((("sendError" in msg.payload) && (Object.prototype.toString.call(msg.payload.sendError).toLowerCase() == "[object Boolean]".toLowerCase())) ? msg.payload.sendError : configDef.sendError);
 
                         node.interval = (("interval" in msg.payload) ? msg.payload.interval.toString().trim() : configDef.interval);
-                        
+
                         
                         if (("chokidar" in msg.payload) && (Object.prototype.toString.call(msg.payload.chokidar).toLowerCase() === "[object Object]".toLowerCase())) {
                             node.chokidar = msg.payload.chokidar;
