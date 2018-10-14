@@ -85,7 +85,7 @@ Tail = class Tail extends events.EventEmitter {
                                     this.emit('notfound', this.last, this.buffer);
                                 }
 
-                                this.last = this.buffer.slice(-512);
+                                this.last = this.buffer.slice(-this.lineBytes);
 
                                 if (pos >= 0) {
                                     if (this.logger) this.logger.info(`pos: ${pos}`);
@@ -153,12 +153,10 @@ Tail = class Tail extends events.EventEmitter {
         this.readBlock = this.readBlock.bind(this);
         this.change = this.change.bind(this);
         this.filename = filename;
-        this.timer = undefined;
 
         ({
             logger: this.logger,
             platform: this.platform = null,
-            options: this.options = {}, 
             encoding: this.encoding = "utf-8",
             separator: this.separator = /[\r]{0,1}\n/,
             fromBeginning = false,
@@ -166,13 +164,27 @@ Tail = class Tail extends events.EventEmitter {
             flushAtEOF: this.flushAtEOF = false,
             mode: this.mode = "",
             rememberLast: this.rememberLast = false,
+            lineBytes: this.lineBytes = 512,
+            chokidar: this.chokidar = {
+                persistent: true,
+                ignoreInitial: true,
+                usePolling: true,
+                interval: 100,
+                binaryInterval: 300,
+                alwaysStat: true,
+                awaitWriteFinish: {
+                    stabilityThreshold: (this.mode ? 200 : 100),
+                    pollInterval: 100
+                },
+                ignorePermissionErrors: true,
+                atomic: true
+            }
         } = options);
 
         if (this.logger) {
             this.logger.info(`<constructor>`);
             this.logger.info(`platform: ${this.platform}`);
-            this.logger.info(`options: ${JSON.stringify(this.options)}`);
-            this.logger.info(`interval: ${this.options.interval}`);
+            this.logger.info(`chokidar: ${JSON.stringify(this.chokidar)}`);
             this.logger.info(`filename: ${this.filename}`);
             this.logger.info(`encoding: ${this.encoding}`);
             if (this.separator) this.logger.info(`separator: ${this.separator.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '_')}`);
@@ -180,8 +192,10 @@ Tail = class Tail extends events.EventEmitter {
             if (!this.mode) this.logger.info(`flushAtEOF: ${this.flushAtEOF}`);
             if (this.mode) this.logger.info(`mode: ${this.mode}`);
             if (this.mode) this.logger.info(`rememberLast: ${this.rememberLast}`);
+            if (this.mode) this.logger.info(`lineBytes: ${this.lineBytes}`);
         }
 
+        this.timer = undefined;
         this.prev = null;
         this.curr = null;
         this.buffer = '';
@@ -277,20 +291,7 @@ Tail = class Tail extends events.EventEmitter {
         if (this.logger) this.logger.info(`following file: ${this.filename}`);
 
         
-        this.watcher = chokidar.watch(this.filename, {
-            persistent: true,
-            ignoreInitial: true,
-            usePolling: true,
-            interval: 100,
-            binaryInterval: 300,
-            alwaysStat: true,
-            awaitWriteFinish: {
-                stabilityThreshold: this.options.interval,
-                pollInterval: 100
-            },
-            ignorePermissionErrors: true,
-            atomic: true
-        });
+        this.watcher = chokidar.watch(this.filename, this.chokidar);
         
 
         this.watcher.on('ready', () => {
