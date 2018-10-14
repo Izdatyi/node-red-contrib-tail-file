@@ -149,6 +149,18 @@ module.exports = function(RED) {
         }
 
 
+        this.on('err', function(err, msg = message) {
+            // if (debug) node.warn(`ERR err: ${err.toString()}; msg: ${JSON.stringify(msg,null,2)}`);
+            msg.filename = node.filename;
+            node.error(err, msg);
+            if (node.sendError) {
+                var sendMessage = RED.util.cloneMessage(msg);
+                delete sendMessage.payload;
+                sendMessage.error = err;
+                node.send(sendMessage);
+            }
+        })
+
         this.on('close', function(done) {
             stop(function () {
                 node.status({});
@@ -181,18 +193,6 @@ module.exports = function(RED) {
                     break;
             }
         });
-
-        this.on('err', function(err, msg = message) {
-            // if (debug) node.warn(`ERR err: ${err.toString()}; msg: ${JSON.stringify(msg,null,2)}`);
-            msg.filename = node.filename;
-            node.error(err, msg);
-            if (node.sendError) {
-                var sendMessage = RED.util.cloneMessage(msg);
-                delete sendMessage.payload;
-                sendMessage.error = err;
-                node.send(sendMessage);
-            }
-        })
     }
 
     RED.nodes.registerType("tail-file", TailFileNode);
