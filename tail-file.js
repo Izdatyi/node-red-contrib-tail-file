@@ -44,7 +44,7 @@ module.exports = function(RED) {
             binaryInterval: 300,
             alwaysStat: true,
             awaitWriteFinish: {
-                // stabilityThreshold: (parseInt(node.interval) > 0 ? parseInt(node.interval) : (node.mode ? 200 : 100)),
+                stabilityThreshold: (parseInt(node.interval) > 0 ? parseInt(node.interval) : (node.mode ? 200 : 100)),
                 pollInterval: 100
             },
             ignorePermissionErrors: true,
