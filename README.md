@@ -21,8 +21,6 @@ npm install node-red-contrib-tail-file
 
 ## Dependencies
 
-Requires:
-
 [paulmillr/**chokidar**](https://github.com/paulmillr/chokidar) (tested on v2.0.4)
 
 [jprichardson/**node-fs-extra**](https://github.com/jprichardson/node-fs-extra)
