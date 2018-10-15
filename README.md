@@ -25,7 +25,7 @@ Requires [paulmillr/**chokidar**](https://github.com/paulmillr/chokidar) (tested
 You can send commands to `tail-file` in runtime.
 For example, create `tail-file` node, then inject necessary parameters (in json format) with `inject` node.
 
-![Inject Example](images/image2.png)
+![Inject Example](images/inject.png)
 
 **stop** tail:
 ```json
