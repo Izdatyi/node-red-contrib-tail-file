@@ -88,3 +88,29 @@ full **config** parameters:
     }
 }
 ```
+
+example of changing **chokidar** parameters only:
+```json
+{
+    "topic": "tail-file-config",
+    "payload": {
+        "chokidar": {
+            "usePolling": true,
+            "awaitWriteFinish": {
+                "stabilityThreshold": 350
+            },
+            "ignorePermissionErrors": true
+        }
+    }
+}
+```
+
+**reset** / **revert** all parameters to default:
+```json
+{
+    "topic": "tail-file-config",
+    "payload": {}
+    }
+}
+```
+
