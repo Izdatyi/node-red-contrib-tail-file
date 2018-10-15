@@ -3,6 +3,7 @@ module.exports = function(RED) {
     'use strict';
     var Tail = require('./tail').Tail;
     var fs = require('fs');
+    var path = require('path');
     var platform = require('os').platform();
 
     function TailFileNode(config) {
@@ -59,6 +60,12 @@ module.exports = function(RED) {
         {
             try {
                 if (node.createFile && !fs.existsSync(node.filename)) {
+                    var dir = path.dirname(node.filename);
+                    if (!fs.existsSync(dir)) {
+                        if (debug) node.warn(`Create dir...`);
+                        fs.mkdirSync(dir);
+                    }
+                    if (debug) node.warn(`Create file...`);
                     fs.writeFileSync(node.filename, "");
                 }
             }
