@@ -15,3 +15,70 @@ npm install node-red-contrib-tail-file
 Requires [paulmillr/**chokidar**](https://github.com/paulmillr/chokidar) (tested on v2.0.4)
 ## Description
 **coming soon**
+## Usage
+**Inject**
+You can use `inject` node to send parameters (json format) to `tail-file` in runtime
+
+For do this create `tail-file` node with empty filename, then inject necessary parameters (json format) with `inject` node
+
+**top** tail:
+```json
+{
+    "topic": "tail-file-stop"
+}
+```
+
+**start** tail:
+```json
+{
+    "topic": "tail-file-start"
+}
+```
+
+**change** filename:
+```json
+{
+    "topic": "tail-file-filename",
+    "payload": "c:/new_file.log"
+}
+```
+
+full **config** parameters:
+```json
+{
+    "topic": "tail-file-config",
+    "payload": {
+        "filename": "c:/file.log",
+        "createFile": false,
+        "encoding": "utf-8",
+        "mode": "",
+        "split": true,
+        "separator": "[\r]{0,1}\n",
+        "fromBeginning": false,
+        "flushAtEOF": false,
+        "rememberLast": true,
+        "lineBytes": 512,
+        "limitSize": true,
+        "maxBytes": 5120,
+        "skipBlank": true,
+        "useTrim": true,
+        "sendError": false,
+        "interval": 100,
+        
+        "chokidar": {
+            "persistent": true,
+            "ignoreInitial": true,
+            "usePolling": true,
+            "interval": 100,
+            "binaryInterval": 300,
+            "alwaysStat": true,
+            "awaitWriteFinish": {
+                "stabilityThreshold": 200,
+                "pollInterval": 100
+            },
+            "ignorePermissionErrors": true,
+            "atomic": true
+        }
+    }
+}
+```
