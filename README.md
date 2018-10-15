@@ -25,7 +25,7 @@ Requires [paulmillr/**chokidar**](https://github.com/paulmillr/chokidar) (tested
 
 Use this for files which are fully rewritable each time. With parameter `lineBytes` (default: 512) node will remember last 512 bytes of current file and try to find them in new file. You can limit size with options `limitSize` and `maxBytes` ("Maximum in one read" option).
 
-If you got many errors try to encrease `interval` ("Interval" option). This is equivalent of chowkidar's parameter `stabilityThreshold`.
+If you got many errors try to increase `interval` ("Interval" option). This is equivalent of chowkidar's parameter `stabilityThreshold`.
 
 From **chokidar** description:
 > By default, the add event will fire when a file first appears on disk, before the entire file has been written. Furthermore, in some cases some change events will be emitted while the file is being written. In some cases, especially when watching for large files there will be a need to wait for the write operation to finish before responding to a file creation or modification. Setting awaitWriteFinish to true (or a truthy value) will poll file size, holding its add and change events until the size does not change for a configurable amount of time. The appropriate duration setting is heavily dependent on the OS and hardware. For accurate detection this parameter should be relatively high, making file watching much less responsive. Use with caution.
