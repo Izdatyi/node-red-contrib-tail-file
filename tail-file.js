@@ -98,9 +98,17 @@ module.exports = function(RED) {
                 }
                 if (debug) node.warn(options);
                 // if (debug) node.warn(`${JSON.stringify(options, null, 2)}`);
+ 
 
-                tail = new Tail(node.filename, options);
-                
+                try {
+                    tail = new Tail(node.filename, options);
+                }
+                catch (err) {
+                    node.emit("err", `tail for '${node.filename}' failed: ${err.toString()}`);
+                    node.status({ fill: "red", shape: "dot", text: "create tail error" });
+                    return;
+                }
+
                 if (tail) {
                     tail.on("line", function (data) {
                         // if (debug) node.warn(`line. skipBlank: ${node.skipBlank}${(node.skipBlank ? `; useTrim: ${node.useTrim}` : "")}`);
@@ -152,12 +160,12 @@ module.exports = function(RED) {
                     node.status({ fill: "green", shape: "dot", text: "active" });
                 }
                 else {
-                    node.emit("err", `create tail error`);
+                    node.emit("err", `${node.filename}: create tail error`);
                     node.status({ fill: "red", shape: "dot", text: "create tail error" });
                 }
             }
             catch (err) {
-                node.emit("err", err.toString());
+                node.emit("err", `initialize for '${node.filename}' failed: ${err.toString()}`);
                 node.status({ fill: "red", shape: "dot", text: "initialize error" });
             }
             if (callback) callback();
@@ -172,7 +180,7 @@ module.exports = function(RED) {
                     // node.status({ fill: "grey", shape: "ring", text: "stopped" });
                 }
                 catch (err) {
-                    node.emit("err", err.toString());
+                    node.emit("err", `unwatch for '${node.filename}' failed: ${err.toString()}`);
                     node.status({ fill: "red", shape: "dot", text: "unwatch error" });
                 }
                 tail = undefined;
