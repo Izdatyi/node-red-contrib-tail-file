@@ -80,7 +80,9 @@ module.exports = function(RED) {
                 if (fs.existsSync(path.dirname(node.filename)) && !fs.existsSync(node.filename)) {
                     if (debug) node.warn(`Create file '${node.filename}'`);
                     try {
-                        fs.writeFileSync(node.filename, "");
+                        fs.writeFileSync(node.filename, "дима", {
+                            encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8")
+                        });
                     } catch (err) {
                         node.emit("err", err.toString());
                         node.status({ fill: "red", shape: "dot", text: "create file error" });
