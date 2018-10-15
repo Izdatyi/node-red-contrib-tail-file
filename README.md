@@ -150,7 +150,6 @@ example of changing **chokidar** parameters only:
 {
     "topic": "tail-file-config",
     "payload": {}
-    }
 }
 ```
 
