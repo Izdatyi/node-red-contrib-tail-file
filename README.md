@@ -23,9 +23,10 @@ Requires [paulmillr/**chokidar**](https://github.com/paulmillr/chokidar) (tested
 **Inject**
 
 You can send commands to `tail-file` in runtime.
-For do this create `tail-file` node, then inject necessary parameters (in json format) with `inject` node
+For example, create `tail-file` node, then inject necessary parameters (in json format) with `inject` node.
 
-**top** tail:
+
+**stop** tail:
 ```json
 {
     "topic": "tail-file-stop"
