@@ -2,7 +2,7 @@
 module.exports = function(RED) {
     'use strict';
     var Tail = require('./tail').Tail;
-    var fs = require('fs-extra');   // require('fs');
+    var fs = require('fs-extra');
     var path = require('path');
     var platform = require('os').platform();
 
@@ -75,31 +75,6 @@ module.exports = function(RED) {
                         node.emit("err", err.toString());
                         node.status({ fill: "red", shape: "dot", text: "create dir error" });
                     }
-
-                    // if (debug) node.warn(`Create dir '${path.dirname(node.filename)}'`);
-                    // try {
-                    //     fs.mkdirSync(path.dirname(node.filename));
-                    // } catch (err) {
-                    //     node.emit("err", err.toString());
-                    //     node.status({ fill: "red", shape: "dot", text: "create dir error" });
-                    // }
-
-                    // const targetDir = path.dirname(node.filename);
-                    // const sep = path.sep;
-                    // const initDir = path.isAbsolute(targetDir) ? sep : '';
-                    // targetDir.split(sep).reduce((parentDir, childDir) => {
-                    //     const curDir = path.resolve('.', parentDir, childDir);
-                    //     try {
-                    //         fs.mkdirSync(curDir);
-                    //     }catch (err) {
-                    //         node.emit("err", err.toString());
-                    //         node.status({ fill: "red", shape: "dot", text: "create dir error" });
-                    //         if (err.code !== 'EEXIST') {
-                    //             throw err;
-                    //         }
-                    //     }
-                    //     return curDir;
-                    // }, initDir);
                 }
 
                 if (fs.existsSync(path.dirname(node.filename)) && !fs.existsSync(node.filename)) {

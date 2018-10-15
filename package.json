@@ -23,6 +23,7 @@
     "url": "https://github.com/Izdatyi/node-red-contrib-tail-file.git"
   },
   "dependencies": {
-    "chokidar": "^2.0.4"
+    "chokidar": "^2.0.4",
+    "fs-extra": "^7.0.0"
   }
 }
