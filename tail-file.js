@@ -57,12 +57,13 @@ module.exports = function(RED) {
 
         
         if (debug) node.warn(`Start`);
-        node.status({ fill: "grey", shape: "ring", text: "waiting for file" });
         start();
 
 
         function start(callback)
         {
+            node.status({ fill: "grey", shape: "ring", text: "waiting for file" });
+        
             try {
                 if (node.createFile && !fs.existsSync(node.filename)) {
                     var dir = path.dirname(node.filename);
