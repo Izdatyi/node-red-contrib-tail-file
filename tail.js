@@ -20,7 +20,7 @@ Tail = class Tail extends events.EventEmitter {
 
     readBlock() {
         if (this.logger) this.logger.info(`<readBlock> filename: ${this.filename}`);
-        var block, stream;
+        var block, stream, err;
 
         boundMethodCheck(this, Tail);
 
@@ -40,13 +40,21 @@ Tail = class Tail extends events.EventEmitter {
                     return results;
                 }.bind(this)
 
-                stream = fs.createReadStream(this.filename, {
-                    flags: 'r', // 'rx' 'r+'
-                    encoding: this.encoding,
-                    start: block.start,
-                    end: block.end - 1,
-                    autoClose: true
-                });
+                try {
+                    stream = fs.createReadStream(this.filename, {
+                        flags: 'r', // 'rx' 'r+'
+                        encoding: this.encoding,
+                        start: block.start,
+                        end: block.end - 1,
+                        autoClose: true
+                    });
+                }
+                catch (error1) {
+                    err = error1;
+                    if (this.logger) this.logger.error(`read for '${this.filename}' failed: ${err}`);
+                    this.emit("error", `read for '${this.filename}' failed: ${err}`);
+                    return;
+                }
 
                 stream.on('error', (error) => {
                     if (this.logger) this.logger.info(`<error>`);
@@ -204,7 +212,7 @@ Tail = class Tail extends events.EventEmitter {
         this.internalDispatcher = new events.EventEmitter();
         this.queue = [];
         this.isWatching = false;
-        this.watcher = null;
+        this.watcher = undefined;
         this.internalDispatcher.on('next', () => {
             return this.readBlock();
         });
@@ -217,7 +225,7 @@ Tail = class Tail extends events.EventEmitter {
         var interval = 0;
         var timing = function () {
             this.timer = setInterval(function () {
-                // if (this.logger) this.logger.info(`tick... interval: ${interval}; filename: ${this.filename}`);
+                if (this.logger) this.logger.info(`tick... interval: ${interval}; filename: ${this.filename}`);
                 if (!this.filename || !fs.existsSync(this.filename)) {
                     if (interval == 0) {
                         this.emit("noent");
@@ -245,8 +253,8 @@ Tail = class Tail extends events.EventEmitter {
             stats = fs.statSync(filename);
         } catch (error1) {
             err = error1;
-            if (this.logger) this.logger.error(`'${e}' event for ${filename}. ${err}`);
-            this.emit("error", `'${e}' event for ${filename}. ${err}`);
+            if (this.logger) this.logger.error(`'${e}' event for '${filename}'. ${err}`);
+            this.emit("error", `'${e}' event for '${filename}'. ${err}`);
             return;
         }
         if (stats.size < this.pos) {
@@ -276,8 +284,8 @@ Tail = class Tail extends events.EventEmitter {
         }
         catch (error1) {
             err = error1;
-            if (this.logger) this.logger.error(`watch for ${this.filename} failed: ${err}`);
-            this.emit("error", `watch for ${this.filename} failed: ${err}`);
+            if (this.logger) this.logger.error(`watch for '${this.filename}' failed: ${err}`);
+            this.emit("error", `watch for '${this.filename}' failed: ${err}`);
             return;
         }
 
@@ -293,46 +301,57 @@ Tail = class Tail extends events.EventEmitter {
         if (this.logger) this.logger.info(`following file: ${this.filename}`);
 
         
-        this.watcher = chokidar.watch(this.filename, this.chokidar);
-        
+        try {
+            this.watcher = chokidar.watch(this.filename, this.chokidar);
+        }
+        catch (error1) {
+            err = error1;
+            if (this.logger) this.logger.error(`watcher for '${this.filename}' failed: ${err}`);
+            this.emit("error", `watcher for '${this.filename}' failed: ${err}`);
+            return;
+        }
 
-        this.watcher.on('ready', () => {
-            if (this.logger) this.logger.info(`'ready'`);
-        });
+        if (this.watcher)
+        {
+            this.watcher.on('ready', () => {
+                if (this.logger) this.logger.info(`'ready'`);
+            });
 
-        this.watcher.on('error', (err) => {
-            if (this.logger) this.logger.error(`watch for ${this.filename} failed: ${err}`);
-            this.emit("error", `watch for ${this.filename} failed: ${err}`);
-        });
+            this.watcher.on('error', (err) => {
+                if (this.logger) this.logger.error(`watch for ${this.filename} failed: ${err}`);
+                this.emit("error", `watch for ${this.filename} failed: ${err}`);
+            });
 
-        // this.watcher.on('addDir', (path, stats) => {
-        //     if (this.logger) this.logger.info(`addDir' stats: ${JSON.stringify(stats)}`);
-        // });
-        // this.watcher.on('unlinkDir', (path) => {
-        //     if (this.logger) this.logger.info(`'unlinkDir'`);
-        // });
-        // this.watcher.on('all', (event, path) => {
-        //     if (this.logger) this.logger.info(`'all' event: ${event}`);
-        // });
-        // this.watcher.on('raw', (event, path, details) => {
-        //     if (this.logger) this.logger.info(`'raw' event: ${event}; details: ${JSON.stringify(details)}`);    // , null, 2
-        // });
+            // this.watcher.on('addDir', (path, stats) => {
+            //     if (this.logger) this.logger.info(`addDir' stats: ${JSON.stringify(stats)}`);
+            // });
+            // this.watcher.on('unlinkDir', (path) => {
+            //     if (this.logger) this.logger.info(`'unlinkDir'`);
+            // });
+            // this.watcher.on('all', (event, path) => {
+            //     if (this.logger) this.logger.info(`'all' event: ${event}`);
+            // });
+            // this.watcher.on('raw', (event, path, details) => {
+            //     if (this.logger) this.logger.info(`'raw' event: ${event}; details: ${JSON.stringify(details)}`);    // , null, 2
+            // });
 
-        this.watcher.on('unlink', (path) => {
-            // if (this.logger) this.logger.info(`'unlink'`);
-            this.emit("disappears");
-        });
+            this.watcher.on('unlink', (path) => {
+                // if (this.logger) this.logger.info(`'unlink'`);
+                this.emit("disappears");
+            });
 
-        this.watcher.on('add', (path, stats) => {
-            // if (this.logger) this.logger.info(`'add' stats: ${JSON.stringify(stats)}`);
-            this.emit("reappears");
-            return this.watchFileEvent(stats);
-        });
+            this.watcher.on('add', (path, stats) => {
+                // if (this.logger) this.logger.info(`'add' stats: ${JSON.stringify(stats)}`);
+                this.emit("reappears");
+                return this.watchFileEvent(stats);
+            });
 
-        this.watcher.on('change', (path, stats) => {
-            // if (this.logger) this.logger.info(`'change' tats: ${JSON.stringify(stats)}`);
-            return this.watchFileEvent(stats);
-        });
+            this.watcher.on('change', (path, stats) => {
+                // if (this.logger) this.logger.info(`'change' tats: ${JSON.stringify(stats)}`);
+                return this.watchFileEvent(stats);
+            });
+        }
+        else this.emit("error", `create watcher for '${this.filename}' failed`);
     }
 
     watchFileEvent(stats) {
@@ -435,7 +454,9 @@ Tail = class Tail extends events.EventEmitter {
     unwatch() {
         if (this.logger) this.logger.info(`<unwatch> filename: ${this.filename}`);
         if (this.timer) clearInterval(this.timer);
+        this.timer = undefined;
         if (this.isWatching && this.watcher) this.watcher.close();
+        this.watcher = undefined;
         this.isWatching = false;
         this.queue = [];
         this.buffer = '';

@@ -100,6 +100,7 @@ module.exports = function(RED) {
                 // if (debug) node.warn(`${JSON.stringify(options, null, 2)}`);
 
                 tail = new Tail(node.filename, options);
+                
                 if (tail) {
                     tail.on("line", function (data) {
                         // if (debug) node.warn(`line. skipBlank: ${node.skipBlank}${(node.skipBlank ? `; useTrim: ${node.useTrim}` : "")}`);
@@ -168,7 +169,7 @@ module.exports = function(RED) {
                 try {
                     tail.unwatch();
                     if (node.filename) node.emit("err", `${node.filename}: tail stopped`);
-                    node.status({ fill: "grey", shape: "ring", text: "stopped" });
+                    // node.status({ fill: "grey", shape: "ring", text: "stopped" });
                 }
                 catch (err) {
                     node.emit("err", err.toString());
@@ -206,7 +207,9 @@ module.exports = function(RED) {
             switch ((msg.topic).toLowerCase()) 
             {
                 case "tail-file-stop".toLowerCase():
-                    stop();
+                    stop(function () {
+                        node.status({ fill: "grey", shape: "ring", text: "stopped" });
+                    });
                     break;
 
                 case "tail-file-start".toLowerCase():
