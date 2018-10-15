@@ -1,5 +1,6 @@
 # node-red-contrib-tail-file
 Node-RED Node: Tail for file **beta**
+
 ## Installation
 From Node-RED:
 ```
@@ -11,15 +12,18 @@ Install with npm:
 (Windows) cd c:\Users\<USER>\.node-red\
 npm install node-red-contrib-tail-file
 ```
+
 ## Dependencies
 Requires [paulmillr/**chokidar**](https://github.com/paulmillr/chokidar) (tested on v2.0.4)
+
 ## Description
 **coming soon**
+
 ## Usage
 **Inject**
-You can use `inject` node to send parameters (json format) to `tail-file` in runtime
 
-For do this create `tail-file` node with empty filename, then inject necessary parameters (json format) with `inject` node
+You can send commands to `tail-file` in runtime.
+For do this create `tail-file` node, then inject necessary parameters (in json format) with `inject` node
 
 **top** tail:
 ```json
