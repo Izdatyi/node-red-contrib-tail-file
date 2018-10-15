@@ -10,4 +10,4 @@ paulmillr/chokidar (https://github.com/paulmillr/chokidar)
 
 ## Description
 
-coming soon
+**coming soon**
