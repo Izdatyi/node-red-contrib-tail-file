@@ -154,4 +154,3 @@ example of changing **chokidar** parameters only:
     "payload": {}
 }
 ```
-
