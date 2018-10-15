@@ -4,6 +4,8 @@ Node-RED Node: Tail for file **beta**
 
 Developed for Windows, but should work on other systems too.
 
+Feedbacks are welcome.
+
 ## Installation
 
 From Node-RED:
