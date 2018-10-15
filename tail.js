@@ -64,6 +64,7 @@ Tail = class Tail extends events.EventEmitter {
                         return this.emit('error', error);
                     });
 
+                    
                     stream.on('end', () => {
                         if (this.logger) this.logger.info(`<end>`);
                         var pos;
@@ -152,7 +153,7 @@ Tail = class Tail extends events.EventEmitter {
                         }
 
                         if (this.logger) this.logger.info(`data buffer: (${this.buffer.length}) '${this.buffer.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '\\_')}'`);
-                    });                    
+                    });
                 }
                 else this.emit("error", `create reader for '${this.filename}' failed`);
             }
