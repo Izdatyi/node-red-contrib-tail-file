@@ -1,6 +1,7 @@
 .npmignore
 node_modules
 package-lock.json
+node-red-contrib-tail-file-*.tgz
 notes.txt
 work.code-workspace
 tail-file.*.html
