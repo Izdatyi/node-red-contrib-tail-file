@@ -7,3 +7,7 @@ npm install node-red-contrib-tail-file
 ```
 ## Dependencies
 paulmillr/chokidar (https://github.com/paulmillr/chokidar)
+
+## Description
+
+coming soon
