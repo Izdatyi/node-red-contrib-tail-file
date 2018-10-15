@@ -49,12 +49,12 @@ For example, create `tail-file` node, then inject necessary parameters (in json 
 }
 ```
 
-full **config** parameters:
+full **config** parameters (default):
 ```json
 {
     "topic": "tail-file-config",
     "payload": {
-        "filename": "c:/file.log",
+        "filename": "",
         "createFile": false,
         "encoding": "utf-8",
         "mode": "",
@@ -89,6 +89,26 @@ full **config** parameters:
 }
 ```
 
+"**replaceable**" mode:
+```json
+{
+    "topic": "tail-file-config",
+    "payload": {
+        "filename": "",
+        "mode": "replaced",
+        "split": false,
+        "fromBeginning": false,
+        "rememberLast": true,
+        "lineBytes": 512,
+        "limitSize": true,
+        "maxBytes": 5120,
+        "skipBlank": false,
+        "useTrim": false,
+        "interval": 200
+    }
+}
+```
+
 example of changing **chokidar** parameters only:
 ```json
 {
@@ -113,4 +133,3 @@ example of changing **chokidar** parameters only:
     }
 }
 ```
-
