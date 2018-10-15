@@ -2,7 +2,7 @@
 module.exports = function(RED) {
     'use strict';
     var Tail = require('./tail').Tail;
-    var fs = require('fs');
+    var fs = require('fs-extra');   // require('fs');
     var path = require('path');
     var platform = require('os').platform();
 
@@ -37,6 +37,7 @@ module.exports = function(RED) {
         // if (debug) node.warn(`configDef: ${JSON.stringify(configDef, null, 2)}`);
         // if (debug) node.warn(`node: ${JSON.stringify(node, null, 2)}`);
         
+        // {isRelativeToScript = false} = {}
         const chokidarDef = {
             persistent: true,
             ignoreInitial: true,
@@ -64,21 +65,54 @@ module.exports = function(RED) {
         {
             node.status({ fill: "grey", shape: "ring", text: "waiting for file" });
         
-            try {
-                if (node.createFile && !fs.existsSync(node.filename)) {
-                    var dir = path.dirname(node.filename);
-                    if (!fs.existsSync(dir)) {
-                        if (debug) node.warn(`Create dir...`);
-                        fs.mkdirSync(dir);
+            if (node.createFile && node.filename && !fs.existsSync(node.filename))
+            {
+                if (!fs.existsSync(path.dirname(node.filename))) {
+                    if (debug) node.warn(`Create dir '${path.dirname(node.filename)}'`);
+                    try {
+                        fs.ensureDirSync(path.dirname(node.filename));
+                    } catch(err) {
+                        node.emit("err", err.toString());
+                        node.status({ fill: "red", shape: "dot", text: "create dir error" });
                     }
-                    if (debug) node.warn(`Create file...`);
-                    fs.writeFileSync(node.filename, "");
+
+                    // if (debug) node.warn(`Create dir '${path.dirname(node.filename)}'`);
+                    // try {
+                    //     fs.mkdirSync(path.dirname(node.filename));
+                    // } catch (err) {
+                    //     node.emit("err", err.toString());
+                    //     node.status({ fill: "red", shape: "dot", text: "create dir error" });
+                    // }
+
+                    // const targetDir = path.dirname(node.filename);
+                    // const sep = path.sep;
+                    // const initDir = path.isAbsolute(targetDir) ? sep : '';
+                    // targetDir.split(sep).reduce((parentDir, childDir) => {
+                    //     const curDir = path.resolve('.', parentDir, childDir);
+                    //     try {
+                    //         fs.mkdirSync(curDir);
+                    //     }catch (err) {
+                    //         node.emit("err", err.toString());
+                    //         node.status({ fill: "red", shape: "dot", text: "create dir error" });
+                    //         if (err.code !== 'EEXIST') {
+                    //             throw err;
+                    //         }
+                    //     }
+                    //     return curDir;
+                    // }, initDir);
+                }
+
+                if (fs.existsSync(path.dirname(node.filename)) && !fs.existsSync(node.filename)) {
+                    if (debug) node.warn(`Create file '${node.filename}'`);
+                    try {
+                        fs.writeFileSync(node.filename, "");
+                    } catch (err) {
+                        node.emit("err", err.toString());
+                        node.status({ fill: "red", shape: "dot", text: "create file error" });
+                    }
                 }
             }
-            catch (err) {
-                node.emit("err", err.toString());
-                node.status({ fill: "red", shape: "dot", text: "create file error" });
-            }
+
 
             try {
                 var options = {
