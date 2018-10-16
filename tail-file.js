@@ -2,7 +2,7 @@
 module.exports = function(RED) {
     'use strict';
     var Tail = require('./tail').Tail;
-    var fs = require('fs');
+    var fs = require('fs-extra');
     var path = require('path');
     var platform = require('os').platform();
 
@@ -15,8 +15,8 @@ module.exports = function(RED) {
         const configDef = {
             filename: this.filename = config.filename || "",
             createFile: this.createFile = config.createFile || false,
-            encoding: this.encoding = config.encoding || "",
             mode: this.mode = config.mode || "",
+            encoding: this.encoding = config.encoding || "",
             split: this.split = config.split || false,
             separator: this.separator = config.separator || "",
             fromBeginning: this.fromBeginning = config.fromBeginning || false,
@@ -52,34 +52,45 @@ module.exports = function(RED) {
 
         
         if (debug) node.warn(`Start`);
-        node.status({ fill: "grey", shape: "ring", text: "waiting for file" });
         start();
 
 
         function start(callback)
         {
-            try {
-                if (node.createFile && !fs.existsSync(node.filename)) {
-                    var dir = path.dirname(node.filename);
-                    if (!fs.existsSync(dir)) {
-                        if (debug) node.warn(`Create dir...`);
-                        fs.mkdirSync(dir);
+            node.status({ fill: "grey", shape: "ring", text: "waiting for file" });
+        
+            if (node.createFile && node.filename && !fs.existsSync(node.filename))
+            {
+                if (!fs.existsSync(path.dirname(node.filename))) {
+                    if (debug) node.warn(`Create dir '${path.dirname(node.filename)}'`);
+                    try {
+                        fs.ensureDirSync(path.dirname(node.filename));
+                    } catch(err) {
+                        node.emit("err", err.toString());
+                        node.status({ fill: "red", shape: "dot", text: "create dir error" });
                     }
-                    if (debug) node.warn(`Create file...`);
-                    fs.writeFileSync(node.filename, "");
+                }
+
+                if (fs.existsSync(path.dirname(node.filename)) && !fs.existsSync(node.filename)) {
+                    if (debug) node.warn(`Create file '${node.filename}'`);
+                    try {
+                        fs.writeFileSync(node.filename, "", {
+                            encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8")
+                        });
+                    } catch (err) {
+                        node.emit("err", err.toString());
+                        node.status({ fill: "red", shape: "dot", text: "create file error" });
+                    }
                 }
             }
-            catch (err) {
-                node.emit("err", err.toString());
-                node.status({ fill: "red", shape: "dot", text: "create file error" });
-            }
+
 
             try {
                 var options = {
                     logger: logger,
                     platform: platform,
-                    encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8"),
-                    separator: (node.split ? RegExp(((node.separator.trim() !== "") ? node.separator.trim() : "[\r]{0,1}\n"), "gi") : ""),
+                    encoding: (node.encoding.toLowerCase().trim() !== "" ? node.encoding.toLowerCase().trim() : "utf-8"),
+                    separator: (((node.encoding.toLowerCase().trim() !== "binary") && node.split) ? RegExp(((node.separator.toString().trim() !== "") ? node.separator.toString().trim() : "[\r]{0,1}\n"), "gi") : ""),
                     fromBeginning: node.fromBeginning,
                     maxBytes: (node.limitSize ? ((parseInt(node.maxBytes) > 0) ? parseInt(node.maxBytes) : 5120) : 0),
                     mode: node.mode,
@@ -92,15 +103,44 @@ module.exports = function(RED) {
                     options.chokidar.awaitWriteFinish.stabilityThreshold = (parseInt(node.interval) > 0 ? parseInt(node.interval) : (node.mode ? 200 : 100))
                 }
                 if (debug) node.warn(options);
+ 
 
-                tail = new Tail(node.filename, options);
+                try {
+                    tail = new Tail(node.filename, options);
+                }
+                catch (err) {
+                    node.emit("err", `tail for '${node.filename}' failed: ${err.toString()}`);
+                    node.status({ fill: "red", shape: "dot", text: "create tail error" });
+                    return;
+                }
+
                 if (tail) {
                     tail.on("line", function (data) {
-                        if (!node.skipBlank || ((node.useTrim ? data.toString().trim() : data.toString()) !== "")) {
-                            node.send({
-                                payload: data,
-                                topic: node.filename
-                            });
+                        if (node.encoding.toLowerCase().trim() === "binary") {
+                            if (!node.skipBlank || data) {
+                                try {
+                                    var byteArray = [];
+                                    for (var i = 0; i < data.length; ++i) {
+                                        byteArray.push(data.charCodeAt(i) & 0xff)
+                                    }
+                                    node.send({
+                                        payload: Buffer.from(byteArray),
+                                        topic: node.filename
+                                    });    
+                                } catch (err) {
+                                    node.emit("err", `data for '${node.filename}' failed: ${err.toString()}`);
+                                    node.status({ fill: "red", shape: "dot", text: "data error" });
+                                    return;
+                                }
+                            }
+                        }
+                        else {
+                            if (!node.skipBlank || ((node.useTrim ? data.toString().trim() : data.toString()) !== "")) {
+                                node.send({
+                                    payload: data.toString(),
+                                    topic: node.filename
+                                });
+                            }                            
                         }
                         node.status({ fill: "green", shape: "dot", text: "active" });
                     });
@@ -143,12 +183,12 @@ module.exports = function(RED) {
                     node.status({ fill: "green", shape: "dot", text: "active" });
                 }
                 else {
-                    node.emit("err", `create tail error`);
+                    node.emit("err", `${node.filename}: create tail error`);
                     node.status({ fill: "red", shape: "dot", text: "create tail error" });
                 }
             }
             catch (err) {
-                node.emit("err", err.toString());
+                node.emit("err", `initialize for '${node.filename}' failed: ${err.toString()}`);
                 node.status({ fill: "red", shape: "dot", text: "initialize error" });
             }
             if (callback) callback();
@@ -160,10 +200,9 @@ module.exports = function(RED) {
                 try {
                     tail.unwatch();
                     if (node.filename) node.emit("err", `${node.filename}: tail stopped`);
-                    node.status({ fill: "grey", shape: "ring", text: "stopped" });
                 }
                 catch (err) {
-                    node.emit("err", err.toString());
+                    node.emit("err", `unwatch for '${node.filename}' failed: ${err.toString()}`);
                     node.status({ fill: "red", shape: "dot", text: "unwatch error" });
                 }
                 tail = undefined;
@@ -196,7 +235,9 @@ module.exports = function(RED) {
             switch ((msg.topic).toLowerCase()) 
             {
                 case "tail-file-stop".toLowerCase():
-                    stop();
+                    stop(function () {
+                        node.status({ fill: "grey", shape: "ring", text: "stopped" });
+                    });
                     break;
 
                 case "tail-file-start".toLowerCase():
@@ -222,6 +263,8 @@ module.exports = function(RED) {
 
                         node.createFile = ((("createFile" in msg.payload) && (Object.prototype.toString.call(msg.payload.createFile).toLowerCase() == "[object Boolean]".toLowerCase())) ? msg.payload.createFile : configDef.createFile);
 
+                        node.mode = ((("mode" in msg.payload) && ((msg.payload.mode.toString() === "") || (msg.payload.mode.toLowerCase() == "replaced"))) ? msg.payload.mode.toLowerCase() : configDef.mode);
+
                         if ("encoding" in msg.payload) {
                             var encoding = msg.payload.encoding.toLowerCase().trim();
                             if (
@@ -240,8 +283,6 @@ module.exports = function(RED) {
                             else node.encoding = configDef.encoding;
                         }
                         else node.encoding = configDef.encoding;
-
-                        node.mode = ((("mode" in msg.payload) && ((msg.payload.mode.toString() === "") || (msg.payload.mode.toLowerCase() == "replaced"))) ? msg.payload.mode.toLowerCase() : configDef.mode);
 
                         node.split = ((("split" in msg.payload) && (Object.prototype.toString.call(msg.payload.split).toLowerCase() == "[object Boolean]".toLowerCase())) ? msg.payload.split : configDef.split);
 
