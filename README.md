@@ -78,8 +78,8 @@ full **config** parameters (default):
     "payload": {
         "filename": "",
         "createFile": false,
-        "encoding": "utf-8",
         "mode": "",
+        "encoding": "utf-8",
         "split": true,
         "separator": "[\r]{0,1}\n",
         "fromBeginning": false,

@@ -106,7 +106,144 @@
 
 <script type="text/x-red" data-help-name="tail-file">
     <p>Tails (watches for things to be added) to the configured file.</p>
-    <p><a href="https://github.com/Izdatyi/node-red-contrib-tail-file" target="_blank">node-red-contrib-tail-file</a></p>
+
+    <ul>
+        <li>Binary entries (<i>Encoding: binary</i>) will be returned as Buffer objects.</li>
+        <li>Text entries will be returned as strings.</li>
+    </ul>
+
+    <h3>Details</h3>
+        <p>More info can be found on <a href="https://github.com/Izdatyi/node-red-contrib-tail-file#node-red-contrib-tail-file" target="_blank">GitHub</a> repository</p>
+
+    <h3>Inputs</h3>
+        <dl class="message-properties">
+            <dt>topic <span class="property-type">string</span></dt>
+            <dd> command</dd>
+
+            <dt class="optional">payload <span class="property-type">string | JSON</span></dt>
+            <dd> parameters for command</dd>
+        </dl>
+
+    <h3>Outputs</h3>
+        <ol class="node-ports">
+            <li>Standard output
+                <dl class="message-properties">
+                    <dt>payload <span class="property-type">string</span></dt>
+                    <dd>entry</dd>
+                </dl>
+    
+                <dl class="message-properties">
+                    <dt>topic <span class="property-type">string</span></dt>
+                    <dd>the path to the file</dd>
+                </dl>
+            </li>
+    
+            <li>Standard error
+                <dl class="message-properties">
+                    <dt>filename <span class="property-type">string</span></dt>
+                    <dd>the path to the file</dd>
+                </dl>
+    
+                <dl class="message-properties">
+                    <dt>error <span class="property-type">string</span></dt>
+                    <dd><i>deprecated</i>: If enabled in the node, when the node hits an error
+                    reading the file, it will send a message with no <code>payload</code>
+                    and this <code>error</code> property set to the error details. This
+                    mode of behaviour is deprecated and not enabled by default for new
+                    instances of the node. See below for more information.</dd>
+                </dl>
+            </li>
+        </ol>
+
+    <h3>Usage</h3>
+        <p><b>stop</b> tail:
+        <pre>{  "topic": "tail-file-stop"   }</pre>
+
+        <p><b>start</b> tail:
+        <pre>{  "topic": "tail-file-start"  }</pre>
+
+        <p><b>change</b> filename:
+        <pre>{
+    "topic": "tail-file-filename",
+    "payload": "c:/new_file.log"
+}</pre>
+
+        <p>full <b>config</b> parameters (<i>default</i>):
+    <pre>{
+    "topic": "tail-file-config",
+    "payload": {
+        "filename": "",
+        "createFile": false,
+        "mode": "",
+        "encoding": "utf-8",
+        "split": true,
+        "separator": "[\r]{0,1}\n",
+        "fromBeginning": false,
+        "flushAtEOF": false,
+        "rememberLast": true,
+        "lineBytes": 512,
+        "limitSize": true,
+        "maxBytes": 5120,
+        "skipBlank": true,
+        "useTrim": true,
+        "sendError": false,
+        "interval": 100,
+        
+        "chokidar": {
+            "persistent": true,
+            "ignoreInitial": true,
+            "usePolling": true,
+            "interval": 100,
+            "binaryInterval": 300,
+            "alwaysStat": true,
+            "awaitWriteFinish": {
+                "stabilityThreshold": 200,
+                "pollInterval": 100
+            },
+            "ignorePermissionErrors": true,
+            "atomic": true
+        }
+    }
+}</pre>
+
+    <p>"Rewritable file" <b>mode</b>:
+    <pre>{
+    "topic": "tail-file-config",
+    "payload": {
+        "filename": "",
+        "mode": "replaced",
+        "split": false,
+        "fromBeginning": false,
+        "rememberLast": true,
+        "lineBytes": 512,
+        "limitSize": true,
+        "maxBytes": 5120,
+        "skipBlank": false,
+        "useTrim": false,
+        "interval": 200
+    }
+}</pre>
+
+    <p>changing <a href="https://github.com/paulmillr/chokidar#performance" target="_blank"><b>chokidar</b></a> parameters only:
+    <pre>{
+    "topic": "tail-file-config",
+    "payload": {
+        "chokidar": {
+            "usePolling": true,
+            "awaitWriteFinish": {
+                "stabilityThreshold": 350
+            },
+            "ignorePermissionErrors": true
+        }
+    }
+}</pre>
+
+    <p><b>reset</b> / <b>revert</b> all parameters to <i>default</i>:
+    <pre>{
+    "topic": "tail-file-config",
+    "payload": {}
+}</pre>
+
 </script>
 
 <script type="text/javascript">
