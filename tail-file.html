@@ -11,20 +11,6 @@
     </div>
 
     <div class="form-row">
-        <label for="node-input-encoding"><i class="fa fa-font"></i> Encoding</label>
-        <select id="node-input-encoding" style="width: 150px;">
-            <option value="utf-8">utf8&nbsp;/&nbsp;utf-8</option>
-            <option value="ucs2">ucs2&nbsp;/&nbsp;ucs-2</option>
-            <option value="utf16le">utf16le&nbsp;/&nbsp;utf-16le</option>
-            <option value="latin1">latin1</option>
-            <option value="binary">binary</option>
-            <option value="base64">base64</option>
-            <option value="ascii">ascii</option>
-            <option value="hex">hex</option>
-        </select>
-    </div>
-
-    <div class="form-row">
         <label for="node-input-mode"><i class="fa fa-random"></i> Mode</label>
         <select id="node-input-mode" style="width: 150px;">
             <option value="">Normal</option>
@@ -33,6 +19,20 @@
     </div>
 
     <div class="form-row">
+        <label for="node-input-encoding"><i class="fa fa-font"></i> Encoding</label>
+        <select id="node-input-encoding" style="width: 150px;">
+            <option value="utf-8">utf8&nbsp;/&nbsp;utf-8</option>
+            <option value="ucs2">ucs2&nbsp;/&nbsp;ucs-2</option>
+            <option value="utf16le">utf16le&nbsp;/&nbsp;utf-16le</option>
+            <option value="latin1">latin1</option>
+            <option value="base64">base64</option>
+            <option value="ascii">ascii</option>
+            <option value="hex">hex</option>
+            <option value="binary">Binary File</option>
+        </select>
+    </div>
+
+    <div class="form-row" id="node-tail-file-separator">
         <label for="node-input-separator"><i class="fa fa-code"></i> Split</label>
         <input type="checkbox" id="node-input-split" style="display: inline-block; width: auto; margin: auto;">
         <label for="node-input-split" style="width: auto;"><span style="vertical-align: middle;">Use separator:&nbsp;</span></label>
@@ -65,7 +65,7 @@
         <label for="node-input-limitSize" style="width: auto;"><span style="vertical-align: middle;">&nbsp;bytes</span></label>
     </div>
 
-    <div class="form-row">
+    <div class="form-row" id="node-tail-file-blank">
         <label>&nbsp;</label>
         <input type="checkbox" id="node-input-skipBlank" style="display: inline-block; width: auto; vertical-align: top;">
         <label for="node-input-skipBlank" style="width: 70%;"><span>Skip blank entries</span></label>
@@ -116,8 +116,8 @@
             debug: { value: true },
             filename: { value: "e:/www.txt" },    // e:/www.txt
             createFile: { value: false },
-            encoding: { value: "utf-8" },
             mode: { value: "" },
+            encoding: { value: "utf-8" },
             split: { value: true },
             separator: { value: "" },
             fromBeginning: { value: false },
@@ -157,11 +157,27 @@
                     $('#node-input-interval').attr('placeholder', '200');
                 }
             });
+            $("#node-input-encoding").on("change", function () {
+                if (this.value === "binary") {
+                    $("#node-tail-file-separator").hide();
+                    // $("#node-tail-file-blank").hide();
+                    $("#node-tail-file-trim").hide();
+                }
+                else {
+                    $("#node-tail-file-separator").show();
+                    // $("#node-tail-file-blank").show();
+                    if ($("#node-input-skipBlank").prop('checked') === true) {
+                        $("#node-tail-file-trim").show();
+                    } else {
+                        $("#node-tail-file-trim").hide();
+                    }
+                }
+            });
             $("#node-input-limitSize").change(function () {
                 $("#node-input-maxBytes").attr('disabled', !$("#node-input-limitSize").prop('checked'));
             })
             $("#node-input-skipBlank").on("change", function () {
-                if (this.checked === true) {
+                if ((this.checked === true) && !($("#node-input-encoding").prop('value') === "binary")) {
                     $("#node-tail-file-trim").show();
                 } else {
                     $("#node-tail-file-trim").hide();

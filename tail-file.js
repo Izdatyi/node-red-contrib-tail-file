@@ -15,8 +15,8 @@ module.exports = function(RED) {
         const configDef = {
             filename: this.filename = config.filename || "",
             createFile: this.createFile = config.createFile || false,
-            encoding: this.encoding = config.encoding || "",
             mode: this.mode = config.mode || "",
+            encoding: this.encoding = config.encoding || "",
             split: this.split = config.split || false,
             separator: this.separator = config.separator || "",
             fromBeginning: this.fromBeginning = config.fromBeginning || false,
@@ -80,7 +80,7 @@ module.exports = function(RED) {
                 if (fs.existsSync(path.dirname(node.filename)) && !fs.existsSync(node.filename)) {
                     if (debug) node.warn(`Create file '${node.filename}'`);
                     try {
-                        fs.writeFileSync(node.filename, "дима", {
+                        fs.writeFileSync(node.filename, "", {
                             encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8")
                         });
                     } catch (err) {
@@ -95,8 +95,8 @@ module.exports = function(RED) {
                 var options = {
                     logger: logger,
                     platform: platform,
-                    encoding: (node.encoding.trim() !== "" ? node.encoding.trim() : "utf-8"),
-                    separator: (node.split ? RegExp(((node.separator.trim() !== "") ? node.separator.trim() : "[\r]{0,1}\n"), "gi") : ""),
+                    encoding: (node.encoding.toLowerCase().trim() !== "" ? node.encoding.toLowerCase().trim() : "utf-8"),
+                    separator: (((node.encoding.toLowerCase().trim() !== "binary") && node.split) ? RegExp(((node.separator.toString().trim() !== "") ? node.separator.toString().trim() : "[\r]{0,1}\n"), "gi") : ""),
                     fromBeginning: node.fromBeginning,
                     maxBytes: (node.limitSize ? ((parseInt(node.maxBytes) > 0) ? parseInt(node.maxBytes) : 5120) : 0),
                     mode: node.mode,
@@ -123,13 +123,22 @@ module.exports = function(RED) {
 
                 if (tail) {
                     tail.on("line", function (data) {
-                        // if (debug) node.warn(`line. skipBlank: ${node.skipBlank}${(node.skipBlank ? `; useTrim: ${node.useTrim}` : "")}`);
-
-                        if (!node.skipBlank || ((node.useTrim ? data.toString().trim() : data.toString()) !== "")) {
-                            node.send({
-                                payload: data,
-                                topic: node.filename
-                            });
+                        if (node.encoding.toLowerCase().trim() === "binary") {
+                            if (!node.skipBlank || data) {
+                                node.send({
+                                    payload: Buffer.from(data),
+                                    topic: node.filename
+                                });
+                            }
+                        }
+                        else {
+                            // if (debug) node.warn(`line. skipBlank: ${node.skipBlank}${(node.skipBlank ? `; useTrim: ${node.useTrim}` : "")}`);
+                            if (!node.skipBlank || ((node.useTrim ? data.toString().trim() : data.toString()) !== "")) {
+                                node.send({
+                                    payload: data.toString(),
+                                    topic: node.filename
+                                });
+                            }                            
                         }
                         node.status({ fill: "green", shape: "dot", text: "active" });
                     });
@@ -256,6 +265,8 @@ module.exports = function(RED) {
 
                         node.createFile = ((("createFile" in msg.payload) && (Object.prototype.toString.call(msg.payload.createFile).toLowerCase() == "[object Boolean]".toLowerCase())) ? msg.payload.createFile : configDef.createFile);
 
+                        node.mode = ((("mode" in msg.payload) && ((msg.payload.mode.toString() === "") || (msg.payload.mode.toLowerCase() == "replaced"))) ? msg.payload.mode.toLowerCase() : configDef.mode);
+
                         if ("encoding" in msg.payload) {
                             var encoding = msg.payload.encoding.toLowerCase().trim();
                             if (
@@ -274,8 +285,6 @@ module.exports = function(RED) {
                             else node.encoding = configDef.encoding;
                         }
                         else node.encoding = configDef.encoding;
-
-                        node.mode = ((("mode" in msg.payload) && ((msg.payload.mode.toString() === "") || (msg.payload.mode.toLowerCase() == "replaced"))) ? msg.payload.mode.toLowerCase() : configDef.mode);
 
                         node.split = ((("split" in msg.payload) && (Object.prototype.toString.call(msg.payload.split).toLowerCase() == "[object Boolean]".toLowerCase())) ? msg.payload.split : configDef.split);
 
