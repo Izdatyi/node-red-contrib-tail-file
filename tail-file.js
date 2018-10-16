@@ -124,9 +124,14 @@ module.exports = function(RED) {
                 if (tail) {
                     tail.on("line", function (data) {
                         if (node.encoding.toLowerCase().trim() === "binary") {
+                            // if (debug) node.warn(`data: ${data.length}`);
                             if (!node.skipBlank || data) {
+                                var byteArray = [];
+                                for (var i = 0; i < data.length; ++i) {
+                                    byteArray.push(data.charCodeAt(i) & 0xff)
+                                }
                                 node.send({
-                                    payload: Buffer.from(data),
+                                    payload: Buffer.from(byteArray),
                                     topic: node.filename
                                 });
                             }
