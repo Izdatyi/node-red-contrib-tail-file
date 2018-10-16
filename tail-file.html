@@ -113,7 +113,17 @@
     </ul>
 
     <h3>Details</h3>
-        <p>More info can be found on <a href="https://github.com/Izdatyi/node-red-contrib-tail-file#node-red-contrib-tail-file" target="_blank">GitHub</a> repository</p>
+
+        <p>Set Input <code>topic</code>:</p>
+        <ul>
+            <li><code>tail-file-start</code></li>
+            <li><code>tail-file-stop</code></li>
+            <li><code>tail-file-filename</code></li>
+            <li><code>tail-file-config</code></li>
+        </ul>
+        <p>for operate with tail node.</p>
+
+        <p>More information can be found on <a href="https://github.com/Izdatyi/node-red-contrib-tail-file#node-red-contrib-tail-file" target="_blank">GitHub</a> repository.</p>
 
     <h3>Inputs</h3>
         <dl class="message-properties">
@@ -224,7 +234,7 @@
     }
 }</pre>
 
-    <p>changing <a href="https://github.com/paulmillr/chokidar#performance" target="_blank"><b>chokidar</b></a> parameters only:
+    <p><b>change</b> <i><a href="https://github.com/paulmillr/chokidar#performance" target="_blank">chokidar</a></i> parameters only:
     <pre>{
     "topic": "tail-file-config",
     "payload": {
