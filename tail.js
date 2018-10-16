@@ -20,7 +20,7 @@ Tail = class Tail extends events.EventEmitter {
 
     readBlock() {
         if (this.logger) this.logger.info(`<readBlock> filename: ${this.filename}`);
-        var block, stream;
+        var block, stream, err;
 
         boundMethodCheck(this, Tail);
 
@@ -40,109 +40,121 @@ Tail = class Tail extends events.EventEmitter {
                     return results;
                 }.bind(this)
 
-                stream = fs.createReadStream(this.filename, {
-                    flags: 'r',
-                    encoding: this.encoding,
-                    start: block.start,
-                    end: block.end - 1,
-                    autoClose: true
-                });
+                try {
+                    stream = fs.createReadStream(this.filename, {
+                        flags: 'r',
+                        encoding: this.encoding,
+                        start: block.start,
+                        end: block.end - 1,
+                        autoClose: true
+                    });
+                }
+                catch (error1) {
+                    err = error1;
+                    if (this.logger) this.logger.error(`read for '${this.filename}' failed: ${err}`);
+                    this.emit("error", `read for '${this.filename}' failed: ${err}`);
+                    return;
+                }
 
-                stream.on('error', (error) => {
-                    if (this.logger) this.logger.info(`<error>`);
-                    if (this.logger) this.logger.error(`Tail error: ${error}`);
-                    return this.emit('error', error);
-                });
+                if (stream)
+                {
+                    stream.on('error', (error) => {
+                        if (this.logger) this.logger.info(`<error>`);
+                        if (this.logger) this.logger.error(`Tail error: ${error}`);
+                        return this.emit('error', error);
+                    });
 
+                    
+                    stream.on('end', () => {
+                        if (this.logger) this.logger.info(`<end>`);
+                        var pos;
+                        var x;
+                        x = this.queue.shift();
+                        if (this.queue.length > 0) this.internalDispatcher.emit("next");
 
-                stream.on('end', () => {
-                    if (this.logger) this.logger.info(`<end>`);
-                    var pos;
-                    var x;
-                    x = this.queue.shift();
-                    if (this.queue.length > 0) this.internalDispatcher.emit("next");
+                        if (this.mode) {
+                            if (this.buffer.length > 0) {
+                                if (this.rememberLast) {
+                                    if (this.logger) this.logger.info(`buffer: (${this.buffer.length})`);
 
-                    if (this.mode) {
-                        if (this.buffer.length > 0) {
-                            if (this.rememberLast) {
-                                if (this.logger) this.logger.info(`buffer: (${this.buffer.length})`);
-
-                                if ((this.last.length > 0) && (this.buffer.length >= this.last.length)) {
-                                    pos = this.buffer.indexOf(this.last);
-                                    if (pos !== -1) pos = pos + this.last.length;
-                                }
-
-                                if (!(pos >= 0)) {
-                                    if (this.logger) {
-                                        this.logger.info(``);
-                                        this.logger.info(`last: (${this.last.length})`);
-                                        this.logger.info(`${this.last.toString().trim()}`);
-                                        this.logger.info(``);
-                                        this.logger.info(`buffer: (${this.buffer.length})`);
-                                        this.logger.info(`${this.buffer.toString().trim()}`);
-                                        this.logger.info(``);
+                                    if ((this.last.length > 0) && (this.buffer.length >= this.last.length)) {
+                                        pos = this.buffer.indexOf(this.last);
+                                        if (pos !== -1) pos = pos + this.last.length;
                                     }
-                                    this.emit('notfound', this.last, this.buffer);
+
+                                    if (!(pos >= 0)) {
+                                        if (this.logger) {
+                                            this.logger.info(``);
+                                            this.logger.info(`last: (${this.last.length})`);
+                                            this.logger.info(`${this.last.toString().trim()}`);
+                                            this.logger.info(``);
+                                            this.logger.info(`buffer: (${this.buffer.length})`);
+                                            this.logger.info(`${this.buffer.toString().trim()}`);
+                                            this.logger.info(``);
+                                        }
+                                        this.emit('notfound', this.last, this.buffer);
+                                    }
+
+                                    this.last = this.buffer.slice(-this.lineBytes);
+
+                                    if (pos >= 0) {
+                                        if (this.logger) this.logger.info(`pos: ${pos}`);
+                                        this.buffer = this.buffer.slice(pos);
+                                    }
+                                    else this.buffer = '';
+
+                                    if (this.logger) this.logger.info(`new last: (${this.last.length}) '...${this.last.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').substr(-70)}'`);
                                 }
 
-                                this.last = this.buffer.slice(-this.lineBytes);
-
-                                if (pos >= 0) {
-                                    if (this.logger) this.logger.info(`pos: ${pos}`);
-                                    this.buffer = this.buffer.slice(pos);
+                            
+                                if (this.logger) this.logger.info(`buffer line: (${this.buffer.length})`);
+                                if (!this.separator) {
+                                    this.emit("line", this.buffer);
+                                    return this.buffer = '';
                                 }
-                                else this.buffer = '';
-
-                                if (this.logger) this.logger.info(`new last: (${this.last.length}) '...${this.last.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').substr(-70)}'`);
+                                else {
+                                    splitData();
+                                    return this.buffer = '';
+                                }
                             }
-
-                        
-                            if (this.logger) this.logger.info(`buffer line: (${this.buffer.length})`);
-                            if (!this.separator) {
+                        }
+                        else {
+                            if (this.flushAtEOF && this.buffer.length > 0) {
+                                if (this.logger) this.logger.info(`buffer line: (${this.buffer.length}) '${this.buffer.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n')}'`);
                                 this.emit("line", this.buffer);
                                 return this.buffer = '';
                             }
-                            else {
-                                splitData();
-                                return this.buffer = '';
-                            }
                         }
-                    }
-                    else {
-                        if (this.flushAtEOF && this.buffer.length > 0) {
-                            if (this.logger) this.logger.info(`buffer line: (${this.buffer.length}) '${this.buffer.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n')}'`);
-                            this.emit("line", this.buffer);
-                            return this.buffer = '';
+
+                        if (this.logger) this.logger.info(`end buffer: (${this.buffer.length}) '${this.buffer.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').substr(-70)}'`);
+                    });
+
+
+                    stream.on('data', (data) => {
+                        if (this.logger) {
+                            this.logger.info(`<data>`);
+                            if (!this.mode && this.separator) this.logger.info(`separator: ${this.separator.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '_')}`);
+                            this.logger.info(`data.length: ${data.length}`);
                         }
-                    }
 
-                    if (this.logger) this.logger.info(`end buffer: (${this.buffer.length}) '${this.buffer.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').substr(-70)}'`);
-                });
-
-
-                stream.on('data', (data) => {
-                    if (this.logger) {
-                        this.logger.info(`<data>`);
-                        if (!this.mode && this.separator) this.logger.info(`separator: ${this.separator.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '_')}`);
-                        this.logger.info(`data.length: ${data.length}`);
-                    }
-
-                    if (this.mode) {
-                        return this.buffer += data;
-                    }
-                    else {
-                        if (!this.separator) {
-                            if (this.logger) this.logger.info(`data line: ${data.length}`);
-                            return this.emit("line", data);
+                        if (this.mode) {
+                            return this.buffer += data;
                         }
                         else {
-                            this.buffer += data;
-                            return splitData();
+                            if (!this.separator) {
+                                if (this.logger) this.logger.info(`data line: ${data.length}`);
+                                return this.emit("line", data);
+                            }
+                            else {
+                                this.buffer += data;
+                                return splitData();
+                            }
                         }
-                    }
 
-                    if (this.logger) this.logger.info(`data buffer: (${this.buffer.length}) '${this.buffer.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '\\_')}'`);
-                });
+                        if (this.logger) this.logger.info(`data buffer: (${this.buffer.length}) '${this.buffer.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/[^\x20-\x7E]/g, '\\_')}'`);
+                    });
+                }
+                else this.emit("error", `create reader for '${this.filename}' failed`);
             }
         }
     }
@@ -203,7 +215,7 @@ Tail = class Tail extends events.EventEmitter {
         this.internalDispatcher = new events.EventEmitter();
         this.queue = [];
         this.isWatching = false;
-        this.watcher = null;
+        this.watcher = undefined;
         this.internalDispatcher.on('next', () => {
             return this.readBlock();
         });
@@ -243,8 +255,8 @@ Tail = class Tail extends events.EventEmitter {
             stats = fs.statSync(filename);
         } catch (error1) {
             err = error1;
-            if (this.logger) this.logger.error(`'${e}' event for ${filename}. ${err}`);
-            this.emit("error", `'${e}' event for ${filename}. ${err}`);
+            if (this.logger) this.logger.error(`'${e}' event for '${filename}'. ${err}`);
+            this.emit("error", `'${e}' event for '${filename}'. ${err}`);
             return;
         }
         if (stats.size < this.pos) {
@@ -274,8 +286,8 @@ Tail = class Tail extends events.EventEmitter {
         }
         catch (error1) {
             err = error1;
-            if (this.logger) this.logger.error(`watch for ${this.filename} failed: ${err}`);
-            this.emit("error", `watch for ${this.filename} failed: ${err}`);
+            if (this.logger) this.logger.error(`watch for '${this.filename}' failed: ${err}`);
+            this.emit("error", `watch for '${this.filename}' failed: ${err}`);
             return;
         }
 
@@ -291,30 +303,41 @@ Tail = class Tail extends events.EventEmitter {
         if (this.logger) this.logger.info(`following file: ${this.filename}`);
 
         
-        this.watcher = chokidar.watch(this.filename, this.chokidar);
-        
+        try {
+            this.watcher = chokidar.watch(this.filename, this.chokidar);
+        }
+        catch (error1) {
+            err = error1;
+            if (this.logger) this.logger.error(`watcher for '${this.filename}' failed: ${err}`);
+            this.emit("error", `watcher for '${this.filename}' failed: ${err}`);
+            return;
+        }
 
-        this.watcher.on('ready', () => {
-            if (this.logger) this.logger.info(`'ready'`);
-        });
+        if (this.watcher)
+        {
+            this.watcher.on('ready', () => {
+                if (this.logger) this.logger.info(`'ready'`);
+            });
 
-        this.watcher.on('error', (err) => {
-            if (this.logger) this.logger.error(`watch for ${this.filename} failed: ${err}`);
-            this.emit("error", `watch for ${this.filename} failed: ${err}`);
-        });
+            this.watcher.on('error', (err) => {
+                if (this.logger) this.logger.error(`watch for ${this.filename} failed: ${err}`);
+                this.emit("error", `watch for ${this.filename} failed: ${err}`);
+            });
 
-        this.watcher.on('unlink', (path) => {
-            this.emit("disappears");
-        });
+            this.watcher.on('unlink', (path) => {
+                this.emit("disappears");
+            });
 
-        this.watcher.on('add', (path, stats) => {
-            this.emit("reappears");
-            return this.watchFileEvent(stats);
-        });
+            this.watcher.on('add', (path, stats) => {
+                this.emit("reappears");
+                return this.watchFileEvent(stats);
+            });
 
-        this.watcher.on('change', (path, stats) => {
-            return this.watchFileEvent(stats);
-        });
+            this.watcher.on('change', (path, stats) => {
+                return this.watchFileEvent(stats);
+            });
+        }
+        else this.emit("error", `create watcher for '${this.filename}' failed`);
     }
 
     watchFileEvent(stats) {
@@ -413,7 +436,9 @@ Tail = class Tail extends events.EventEmitter {
     unwatch() {
         if (this.logger) this.logger.info(`<unwatch> filename: ${this.filename}`);
         if (this.timer) clearInterval(this.timer);
+        this.timer = undefined;
         if (this.isWatching && this.watcher) this.watcher.close();
+        this.watcher = undefined;
         this.isWatching = false;
         this.queue = [];
         this.buffer = '';
