@@ -126,14 +126,20 @@ module.exports = function(RED) {
                         if (node.encoding.toLowerCase().trim() === "binary") {
                             // if (debug) node.warn(`data: ${data.length}`);
                             if (!node.skipBlank || data) {
-                                var byteArray = [];
-                                for (var i = 0; i < data.length; ++i) {
-                                    byteArray.push(data.charCodeAt(i) & 0xff)
+                                try {
+                                    var byteArray = [];
+                                    for (var i = 0; i < data.length; ++i) {
+                                        byteArray.push(data.charCodeAt(i) & 0xff)
+                                    }
+                                    node.send({
+                                        payload: Buffer.from(byteArray),
+                                        topic: node.filename
+                                    });    
+                                } catch (err) {
+                                    node.emit("err", `data for '${node.filename}' failed: ${err.toString()}`);
+                                    node.status({ fill: "red", shape: "dot", text: "data error" });
+                                    return;
                                 }
-                                node.send({
-                                    payload: Buffer.from(byteArray),
-                                    topic: node.filename
-                                });
                             }
                         }
                         else {
